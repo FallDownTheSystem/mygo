@@ -94,6 +94,9 @@ type Backend struct {
 	// (menudraw.go).
 	menuFonts   map[int]menuFonts
 	menuBrushes map[uint32]uintptr
+	// menuExtra is what Windows adds to the width of every item MyGo
+	// draws, 0 until measured (menuItemExtra).
+	menuExtra int32
 	// menuHook hooks the main thread while menus show.
 	menuHook uintptr
 	// comp shows the controls of windows with a material behind them
