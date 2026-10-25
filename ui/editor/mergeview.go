@@ -343,7 +343,10 @@ func MergeView(c *ui.Context, m *MergeState) ui.Element {
 				m.rebuildIfMoved()
 			})
 			box.Children(func() {
-				m.eds[2].build(c, m.Result, m.options(2)).Fill()
+				ed := m.eds[2].build(c, m.Result, m.options(2)).Fill()
+				if m.ResultHandle != nil {
+					ed.Bind(m.ResultHandle)
+				}
 			})
 		})
 	})
