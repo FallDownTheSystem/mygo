@@ -118,6 +118,16 @@ type decor interface {
 	dragLines(ed *editor, ev ui.InputEvent) bool
 }
 
+// blockDecor is a decor with rows of its own: the lines it hides, its
+// blocks, and the elements it builds over them, as a diff's side and a
+// merge's.
+type blockDecor interface {
+	decor
+	hidden() []lineSpan
+	blocks() []block
+	buildBlocks(c *ui.Context, ed *editor)
+}
+
 type lineLook struct {
 	bg, gutter, number ui.Color
 	bar                ui.Color
@@ -493,7 +503,7 @@ func (ed *editor) hiddenSpans() []lineSpan {
 // those a diff collapses and those replacements hide, merged.
 func (ed *editor) hiddenLines() []lineSpan {
 	hidden := ed.hiddenSpans()
-	if ds, ok := ed.o.decor.(*diffSide); ok {
+	if ds, ok := ed.o.decor.(blockDecor); ok {
 		hidden = mergeSpans(append(hidden, ds.hidden()...))
 	}
 	if r := ed.view.replacedLines(); len(r) > 0 {

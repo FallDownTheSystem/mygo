@@ -206,5 +206,13 @@
   "permissionBluetooth": "Bluetooth",
   "permissionMediaAppleMusic": "メディアとApple Music",
   "guideDrag": "{app}を上のリストにドラッグして{permission}を許可してください。",
-  "guideDragHint": "ドラッグ"
+  "guideDragHint": "ドラッグ",
+  "mergeResult": "結果",
+  "mergeConflictOf": "競合 {n}/{total}",
+  "mergeTake": "{version} の行を使う",
+  "mergeTook": "{version} の行を使用",
+  "mergeTookBoth": "{first} の行、続けて {second} の行を使用",
+  "mergeTookNeither": "どちらの行も使わない",
+  "mergeEdited": "編集済み",
+  "mergeUnresolved": "未解決"
 }

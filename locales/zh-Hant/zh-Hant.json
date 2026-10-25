@@ -206,5 +206,13 @@
   "permissionBluetooth": "藍牙",
   "permissionMediaAppleMusic": "媒體與 Apple Music",
   "guideDrag": "將{app}拖入上方列表以允許{permission}。",
-  "guideDragHint": "拖入"
+  "guideDragHint": "拖入",
+  "mergeResult": "結果",
+  "mergeConflictOf": "衝突 {n}/{total}",
+  "mergeTake": "使用 {version} 的行",
+  "mergeTook": "使用 {version} 的行",
+  "mergeTookBoth": "先用 {first} 的行，再用 {second} 的行",
+  "mergeTookNeither": "兩邊的行都不用",
+  "mergeEdited": "已編輯",
+  "mergeUnresolved": "未解決"
 }

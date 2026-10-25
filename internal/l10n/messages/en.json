@@ -205,5 +205,13 @@
   "permissionBluetooth": "Bluetooth",
   "permissionMediaAppleMusic": "Media \u0026 Apple Music",
   "guideDrag": "Drag {app} to the list above to allow {permission}.",
-  "guideDragHint": "Drag"
+  "guideDragHint": "Drag",
+  "mergeResult": "Result",
+  "mergeConflictOf": "Conflict {n} of {total}",
+  "mergeTake": "Use {version}'s lines",
+  "mergeTook": "Uses {version}'s lines",
+  "mergeTookBoth": "Uses {first}'s lines, then {second}'s",
+  "mergeTookNeither": "Uses neither version's lines",
+  "mergeEdited": "Edited",
+  "mergeUnresolved": "Unresolved"
 }

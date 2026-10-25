@@ -60,7 +60,7 @@ func (ed *editor) layout(w, h, scale float32) {
 	}
 	v.heights.setLines(v.text.LineCount())
 	var blocks []block
-	if ds, ok := ed.o.decor.(*diffSide); ok {
+	if ds, ok := ed.o.decor.(blockDecor); ok {
 		blocks = ds.blocks()
 	}
 	v.heights.setHidden(ed.hiddenLines())
