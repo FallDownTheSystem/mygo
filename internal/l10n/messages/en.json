@@ -181,5 +181,13 @@
   "clipboardRead": "A program wants to read the clipboard",
   "clipboardReadAllow": "Allow",
   "clipboardReadDeny": "Deny",
-  "clipboardReadEmpty": "The clipboard is empty."
+  "clipboardReadEmpty": "The clipboard is empty.",
+  "mergeResult": "Result",
+  "mergeConflictOf": "Conflict {n} of {total}",
+  "mergeTake": "Use {version}'s lines",
+  "mergeTook": "Uses {version}'s lines",
+  "mergeTookBoth": "Uses {first}'s lines, then {second}'s",
+  "mergeTookNeither": "Uses neither version's lines",
+  "mergeEdited": "Edited",
+  "mergeUnresolved": "Unresolved"
 }

@@ -62,7 +62,7 @@ func (ed *editor) layout(w, h, scale float32) {
 	hidden := ed.hiddenSpans()
 	var blocks []block
 	if ed.o.decor != nil {
-		if ds, ok := ed.o.decor.(*diffSide); ok {
+		if ds, ok := ed.o.decor.(blockDecor); ok {
 			hidden = mergeSpans(append(hidden, ds.hidden()...))
 			blocks = ds.blocks()
 		}
