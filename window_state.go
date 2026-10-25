@@ -18,9 +18,11 @@ import (
 // by the WindowStateStore, in window-state.json in PathUserData unless the
 // app set its own. It is captured shortly after the window moves, resizes
 // or changes state, when it settled (maximizing and full screen
-// transitions resize the window on the way), and when it closes; it is
-// saved when a window closes and when the app quits, until
-// App.ClearWindowStates.
+// transitions resize the window on the way), and when it closes. It is
+// saved each time it is captured changed, not only when a window closes
+// and when the app quits: a process that is ended, as mygo dev ends a
+// build it replaces, or that crashes, quits without saving. Nothing is
+// captured or saved after App.ClearWindowStates.
 
 const windowStateFile = "window-state.json"
 
@@ -239,6 +241,7 @@ func (w *Window) captureState() {
 	if prev, ok := windowStates.byKey[w.stateKey]; !ok || prev != st {
 		windowStates.byKey[w.stateKey] = st
 		windowStates.dirty = true
+		saveWindowStates()
 	}
 }
 
