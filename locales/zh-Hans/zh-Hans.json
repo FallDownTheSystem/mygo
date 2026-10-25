@@ -182,5 +182,13 @@
   "clipboardRead": "某程序想要读取剪贴板",
   "clipboardReadAllow": "允许",
   "clipboardReadDeny": "拒绝",
-  "clipboardReadEmpty": "剪贴板中没有文本。"
+  "clipboardReadEmpty": "剪贴板中没有文本。",
+  "mergeResult": "结果",
+  "mergeConflictOf": "冲突 {n}/{total}",
+  "mergeTake": "使用 {version} 的行",
+  "mergeTook": "使用 {version} 的行",
+  "mergeTookBoth": "先用 {first} 的行，再用 {second} 的行",
+  "mergeTookNeither": "两边的行都不用",
+  "mergeEdited": "已编辑",
+  "mergeUnresolved": "未解决"
 }

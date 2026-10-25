@@ -81,6 +81,8 @@ type logEntry struct {
 	version uint64
 	text    rope.Text
 	changes []change
+	// reset is set for a Reset: a new text, not an edit of the old.
+	reset bool
 }
 
 // transaction is a step of undo: the text before and after, the changes
@@ -262,6 +264,7 @@ func (b *Buffer) Reset(text string) {
 	b.saved = b.text
 	b.undo, b.redo, b.openTx = nil, nil, nil
 	b.record([]change{wholeChange(old, b.text)})
+	b.log[len(b.log)-1].reset = true
 }
 
 // Set replaces the whole text as one edit, which Undo takes back.
