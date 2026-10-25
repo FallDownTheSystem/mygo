@@ -182,5 +182,13 @@
   "clipboardRead": "プログラムがクリップボードの読み取りを求めています",
   "clipboardReadAllow": "許可",
   "clipboardReadDeny": "拒否",
-  "clipboardReadEmpty": "クリップボードは空です。"
+  "clipboardReadEmpty": "クリップボードは空です。",
+  "mergeResult": "結果",
+  "mergeConflictOf": "競合 {n}/{total}",
+  "mergeTake": "{version} の行を使う",
+  "mergeTook": "{version} の行を使用",
+  "mergeTookBoth": "{first} の行、続けて {second} の行を使用",
+  "mergeTookNeither": "どちらの行も使わない",
+  "mergeEdited": "編集済み",
+  "mergeUnresolved": "未解決"
 }

@@ -2677,3 +2677,125 @@ func ClipboardReadEmpty() string { return In(i18n.Locale()).ClipboardReadEmpty()
 func (msgs Messages) ClipboardReadEmpty() string {
 	return Catalog.Format(msgs.locale, "clipboardReadEmpty", nil)
 }
+
+// MergeResult says "Result"
+// in the language the app shows.
+//
+// Names the merged text of the three-way merge editor, below the two
+// versions merged.
+func MergeResult() string { return In(i18n.Locale()).MergeResult() }
+
+// MergeResult says "Result"
+// in the language of msgs.
+//
+// Names the merged text of the three-way merge editor, below the two
+// versions merged.
+func (msgs Messages) MergeResult() string {
+	return Catalog.Format(msgs.locale, "mergeResult", nil)
+}
+
+// MergeConflictOf says "Conflict {n} of {total}"
+// in the language the app shows.
+//
+// Names a conflict of a file being merged, on the bar above it.
+func MergeConflictOf(n int, total int) string { return In(i18n.Locale()).MergeConflictOf(n, total) }
+
+// MergeConflictOf says "Conflict {n} of {total}"
+// in the language of msgs.
+//
+// Names a conflict of a file being merged, on the bar above it.
+func (msgs Messages) MergeConflictOf(n int, total int) string {
+	return Catalog.Format(msgs.locale, "mergeConflictOf", map[string]any{"n": n, "total": total})
+}
+
+// MergeTake says "Use {version}'s lines"
+// in the language the app shows.
+//
+// The checkbox above a conflict that takes a version's lines into the
+// merged text, as "Use main's lines".
+func MergeTake(version string) string { return In(i18n.Locale()).MergeTake(version) }
+
+// MergeTake says "Use {version}'s lines"
+// in the language of msgs.
+//
+// The checkbox above a conflict that takes a version's lines into the
+// merged text, as "Use main's lines".
+func (msgs Messages) MergeTake(version string) string {
+	return Catalog.Format(msgs.locale, "mergeTake", map[string]any{"version": version})
+}
+
+// MergeTook says "Uses {version}'s lines"
+// in the language the app shows.
+//
+// How a conflict of the merged text is resolved: by a version's lines.
+func MergeTook(version string) string { return In(i18n.Locale()).MergeTook(version) }
+
+// MergeTook says "Uses {version}'s lines"
+// in the language of msgs.
+//
+// How a conflict of the merged text is resolved: by a version's lines.
+func (msgs Messages) MergeTook(version string) string {
+	return Catalog.Format(msgs.locale, "mergeTook", map[string]any{"version": version})
+}
+
+// MergeTookBoth says "Uses {first}'s lines, then {second}'s"
+// in the language the app shows.
+//
+// How a conflict of the merged text is resolved: by both versions' lines,
+// one after the other.
+func MergeTookBoth(first string, second string) string {
+	return In(i18n.Locale()).MergeTookBoth(first, second)
+}
+
+// MergeTookBoth says "Uses {first}'s lines, then {second}'s"
+// in the language of msgs.
+//
+// How a conflict of the merged text is resolved: by both versions' lines,
+// one after the other.
+func (msgs Messages) MergeTookBoth(first string, second string) string {
+	return Catalog.Format(msgs.locale, "mergeTookBoth", map[string]any{"first": first, "second": second})
+}
+
+// MergeTookNeither says "Uses neither version's lines"
+// in the language the app shows.
+//
+// How a conflict of the merged text is resolved: with none of the versions'
+// lines.
+func MergeTookNeither() string { return In(i18n.Locale()).MergeTookNeither() }
+
+// MergeTookNeither says "Uses neither version's lines"
+// in the language of msgs.
+//
+// How a conflict of the merged text is resolved: with none of the versions'
+// lines.
+func (msgs Messages) MergeTookNeither() string {
+	return Catalog.Format(msgs.locale, "mergeTookNeither", nil)
+}
+
+// MergeEdited says "Edited"
+// in the language the app shows.
+//
+// How a conflict of the merged text is resolved: by lines edited by hand.
+func MergeEdited() string { return In(i18n.Locale()).MergeEdited() }
+
+// MergeEdited says "Edited"
+// in the language of msgs.
+//
+// How a conflict of the merged text is resolved: by lines edited by hand.
+func (msgs Messages) MergeEdited() string {
+	return Catalog.Format(msgs.locale, "mergeEdited", nil)
+}
+
+// MergeUnresolved says "Unresolved"
+// in the language the app shows.
+//
+// A conflict of the merged text that still holds its conflict markers.
+func MergeUnresolved() string { return In(i18n.Locale()).MergeUnresolved() }
+
+// MergeUnresolved says "Unresolved"
+// in the language of msgs.
+//
+// A conflict of the merged text that still holds its conflict markers.
+func (msgs Messages) MergeUnresolved() string {
+	return Catalog.Format(msgs.locale, "mergeUnresolved", nil)
+}

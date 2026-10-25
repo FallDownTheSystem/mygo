@@ -872,5 +872,63 @@
   "clipboardReadEmpty": "The clipboard is empty.",
   "@clipboardReadEmpty": {
     "description": "What the terminal's clipboard prompt shows when the clipboard holds no text."
+  },
+  "mergeResult": "Result",
+  "@mergeResult": {
+    "description": "Names the merged text of the three-way merge editor, below the two versions merged."
+  },
+  "mergeConflictOf": "Conflict {n} of {total}",
+  "@mergeConflictOf": {
+    "description": "Names a conflict of a file being merged, on the bar above it.",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "mergeTake": "Use {version}'s lines",
+  "@mergeTake": {
+    "description": "The checkbox above a conflict that takes a version's lines into the merged text, as \"Use main's lines\".",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeTook": "Uses {version}'s lines",
+  "@mergeTook": {
+    "description": "How a conflict of the merged text is resolved: by a version's lines.",
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeTookBoth": "Uses {first}'s lines, then {second}'s",
+  "@mergeTookBoth": {
+    "description": "How a conflict of the merged text is resolved: by both versions' lines, one after the other.",
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      }
+    }
+  },
+  "mergeTookNeither": "Uses neither version's lines",
+  "@mergeTookNeither": {
+    "description": "How a conflict of the merged text is resolved: with none of the versions' lines."
+  },
+  "mergeEdited": "Edited",
+  "@mergeEdited": {
+    "description": "How a conflict of the merged text is resolved: by lines edited by hand."
+  },
+  "mergeUnresolved": "Unresolved",
+  "@mergeUnresolved": {
+    "description": "A conflict of the merged text that still holds its conflict markers."
   }
 }
