@@ -397,6 +397,16 @@ func (it *MenuItem) Shortcut(mods Modifiers, key Key) *MenuItem {
 	return it
 }
 
+// Accelerator shows keys by the item, a shortcut as mygo.MenuItem's
+// Accelerator writes it ("CmdOrCtrl+Shift+N"), for an item that does what
+// an item of the app's menus does.
+func (it *MenuItem) Accelerator(keys string) *MenuItem {
+	if it.p != nil {
+		it.p.Accelerator = keys
+	}
+	return it
+}
+
 // Subtitle shows s on a second, smaller line under the item's label, as
 // package mygo's MenuItem.Subtitle does: PopoverMenu draws it so on every
 // platform, in the color of the shortcuts, and the system's menus show it
