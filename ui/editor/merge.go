@@ -40,6 +40,9 @@ type MergeState struct {
 	// Split is the part of the height the versions take, above the
 	// result: 0.5 when 0.
 	Split float32
+	// ResultHandle, when set, is bound to the result's editor, which the
+	// app focuses by it.
+	ResultHandle *ui.Handle
 
 	conflicts []mergeConflict
 	// parsed is the result the conflicts are of, and ver its version they
