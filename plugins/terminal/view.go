@@ -918,8 +918,9 @@ func (v *view) copied(text string, by CopySource) {
 // paste pastes the clipboard and reports whether it held anything. It
 // reads, on the main thread, as the paste starts, every format for
 // Options.OnPaste, those the program can read for one that reads the
-// clipboard itself (mode 5522), and else only the text, so that pasting
-// into a shell converts no image for nothing. The program's read comes
+// clipboard itself (mode 5522), and else only the text and the files,
+// whose paths paste (pasteData), so that pasting into a shell converts no
+// image for nothing. The program's read comes
 // later, from the terminal's goroutine, where the clipboard cannot be
 // read: it reads what was read here.
 func (v *view) paste() bool {
@@ -944,7 +945,7 @@ func (v *view) paste() bool {
 		}
 		d = v.services.ReadClipboardData(formats...)
 	default:
-		d = v.services.ReadClipboardData(transfer.Text)
+		d = v.services.ReadClipboardData(transfer.Text, transfer.FileList)
 	}
 	t.pasteData(d, held)
 	return true

@@ -2727,6 +2727,41 @@ func TestQuotePaths(t *testing.T) {
 // Files dropped on a terminal paste their paths, escaped for a shell and
 // between spaces, as Ghostty does: bracketed for a program that asks, so
 // that an agent takes them as files it attaches.
+// Files copied, with no text, paste as their paths, as they drop: with
+// no OnPaste, and when OnPaste leaves the paste to the terminal.
+func TestPasteCopiedFiles(t *testing.T) {
+	loadLib(t)
+	dir := t.TempDir()
+	shot := filepath.Join(dir, "my shot.png")
+	if err := os.WriteFile(shot, []byte("png"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	files, err := transfer.FileData(shot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pasteMods := ui.Ctrl | ui.Shift
+	if runtime.GOOS == "darwin" {
+		pasteMods = ui.Super
+	}
+	for _, onPaste := range []func(transfer.Data) bool{nil, func(transfer.Data) bool { return false }} {
+		conn := newPipe()
+		term, err := New(Options{Conn: conn, OnPaste: onPaste})
+		if err != nil {
+			t.Fatal(err)
+		}
+		tt := ui.NewTester(func(c *ui.Context) { View(c, term).Fill().AutoFocus() }, 400, 200)
+		tt.SetClipboardData(files)
+		term.Feed([]byte("\x1b[?2004h"))
+		tt.Frame()
+		tt.Key(pasteMods, ui.KeyV)
+		if got, want := conn.take(term), "\x1b[200~"+term.quoting.quote(shot)+"\x1b[201~"; got != want {
+			t.Errorf("with OnPaste set %v: pasted %q, want %q", onPaste != nil, got, want)
+		}
+		term.Close()
+	}
+}
+
 func TestDropFiles(t *testing.T) {
 	loadLib(t)
 	conn := newPipe()
