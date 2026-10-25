@@ -75,8 +75,7 @@ func (s *diffSide) lineStyle(line int) lineLook {
 // by their numbers: the same for a side's own lines and for the deleted
 // lines a unified view paints as blocks.
 func (s *diffSide) markSelected(ed *editor, side DiffSide, line int, st *lineLook) {
-	d := s.d
-	if !d.hasSel || d.selected.Side != side || line < d.selected.Start || line > d.selected.End {
+	if !s.d.LineSelected(side, line) {
 		return
 	}
 	m := ed.theme.Modified
@@ -244,17 +243,7 @@ func (s *diffSide) blockInput(ed *editor, b *block, ev ui.InputEvent, r ui.Rect)
 		case blockDeleted:
 			// Lines of the old text: their numbers select them.
 			if ev.X < ed.gutterW && d.LineSelection && ev.Kind == ui.InputPointerDown {
-				// The line by the heights of its rows and annotations.
-				lh := ed.view.lineHeight
-				y, line := r.Y, b.to-1
-				for l := b.from; l < b.to; l++ {
-					y += float32(d.oldView.heights.wraps.rows(l))*lh + d.annotationHeight(DiffOld, l)
-					if ev.Y < y {
-						line = l
-						break
-					}
-				}
-				d.selectLine(DiffOld, line, ev.Mods&ui.Shift != 0)
+				d.selectLine(DiffOld, s.deletedLineAt(b, r, ev.Y), ev.Mods)
 				return true
 			}
 			return true
@@ -268,10 +257,54 @@ func (s *diffSide) blockInput(ed *editor, b *block, ev ui.InputEvent, r ui.Rect)
 	_, cy := ed.toContent(ev.X, ev.Y)
 	line := ed.view.heights.lineAt(cy)
 	if d.LineSelection {
-		d.selectLine(side, line, ev.Mods&ui.Shift != 0)
+		d.selectLine(side, line, ev.Mods)
 		return true
 	}
 	return false
+}
+
+// deletedLineAt returns the old line of a unified view's deleted block
+// b, whose box is r, at height y of the element, by the heights of its
+// rows and annotations; its last line past them.
+func (s *diffSide) deletedLineAt(b *block, r ui.Rect, y float32) int {
+	d := s.d
+	lh := d.eds[1].view.lineHeight
+	top := r.Y
+	for l := b.from; l < b.to; l++ {
+		top += float32(d.oldView.heights.wraps.rows(l))*lh + d.annotationHeight(DiffOld, l)
+		if y < top {
+			return l
+		}
+	}
+	return b.to - 1
+}
+
+// dragLines takes the moves of a press on the number of a line, which
+// select the lines to the one the pointer is over, its number or its
+// text, and the press's end. A move over no line, as over a separator,
+// leaves the selection as it is.
+func (s *diffSide) dragLines(ed *editor, ev ui.InputEvent) bool {
+	d := s.d
+	if !d.lineDrag {
+		return false
+	}
+	if ev.Kind == ui.InputPointerUp {
+		d.lineDrag = false
+		return true
+	}
+	_, cy := ed.toContent(ev.X, max(ev.Y, 0))
+	if b, r, ok := ed.blockAt(cy); ok {
+		if b.kind == blockDeleted {
+			d.dragLine(DiffOld, s.deletedLineAt(b, r, ev.Y))
+		}
+		return true
+	}
+	side := DiffNew
+	if s.old {
+		side = DiffOld
+	}
+	d.dragLine(side, ed.view.heights.lineAt(cy))
+	return true
 }
 
 // buildBlocks builds what blocks hold of elements in view: annotations,

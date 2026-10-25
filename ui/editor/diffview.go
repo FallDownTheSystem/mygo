@@ -1,6 +1,7 @@
 package editor
 
 import (
+	"slices"
 	"strconv"
 
 	"github.com/egoist/mygo/ui"
@@ -52,7 +53,11 @@ type DiffState struct {
 	// new lines Old's, as an agent's changes are reviewed.
 	HunkActions bool
 	// LineSelection lets the numbers of lines be clicked and dragged to
-	// select lines, which OnLineSelection reports.
+	// select lines, which OnLineSelection reports, with the range the line
+	// pressed or dragged to is in: Shift extends the selection from where
+	// it started, and Cmd (Ctrl off macOS) adds a line or takes it away.
+	// In a unified view, the lines go in the order they show, so that the
+	// deleted lines and the added ones of a change select together.
 	LineSelection   bool
 	OnLineSelection func(DiffLineRange)
 	// OnGutterButton shows a + on the gutter of the line under the
@@ -93,8 +98,15 @@ type DiffState struct {
 	revealedVer uint64
 	revealedOf  *Buffer
 	expandV     int
-	selected    DiffLineRange
-	hasSel      bool
+	// selected are the lines selected by their numbers, by side and
+	// line, none overlapping or touching another of its side; selAnchor
+	// is the line the selection extends from, and selBase what stays
+	// selected besides, as a Cmd-click leaves it. lineDrag is set while
+	// a press on a number drags.
+	selected  []DiffLineRange
+	selAnchor DiffLineRange
+	selBase   []DiffLineRange
+	lineDrag  bool
 	// oldActive is set while the old side of a split view has the
 	// keyboard, and stays after it goes, until the new side has it.
 	oldActive bool
@@ -274,17 +286,104 @@ func (d *DiffState) CollapseAll() {
 	d.expandV++
 }
 
-// SelectedLines returns the lines selected by their numbers, and whether
-// there are.
-func (d *DiffState) SelectedLines() (DiffLineRange, bool) { return d.selected, d.hasSel }
-
-// SetSelectedLines selects lines, as clicking their numbers does; ok
-// false clears the selection.
-func (d *DiffState) SetSelectedLines(r DiffLineRange, ok bool) {
-	if r.End < r.Start {
-		r.Start, r.End = r.End, r.Start
+// SelectedLines returns the first of the ranges of lines selected by
+// their numbers (SelectedRanges), and whether there are any.
+func (d *DiffState) SelectedLines() (DiffLineRange, bool) {
+	if len(d.selected) == 0 {
+		return DiffLineRange{}, false
 	}
-	d.selected, d.hasSel = r, ok
+	return d.selected[0], true
+}
+
+// SetSelectedLines selects a range of lines, as clicking their numbers
+// does; ok false clears the selection.
+func (d *DiffState) SetSelectedLines(r DiffLineRange, ok bool) {
+	if !ok {
+		d.SetSelectedRanges(nil)
+		return
+	}
+	d.SetSelectedRanges([]DiffLineRange{r})
+}
+
+// SelectedRanges returns the lines selected by their numbers: the old
+// side's ranges, then the new side's, each in order, none overlapping
+// or touching another of its side.
+func (d *DiffState) SelectedRanges() []DiffLineRange { return slices.Clone(d.selected) }
+
+// SetSelectedRanges selects lines, as clicking and dragging their
+// numbers does; none clears the selection.
+func (d *DiffState) SetSelectedRanges(rs []DiffLineRange) {
+	d.selected = normalRanges(rs)
+	d.selBase, d.lineDrag = nil, false
+	if len(d.selected) > 0 {
+		r := d.selected[0]
+		d.selAnchor = DiffLineRange{Side: r.Side, Start: r.Start, End: r.Start}
+	}
+}
+
+// LineSelected reports whether a line of a side is selected by its
+// number.
+func (d *DiffState) LineSelected(side DiffSide, line int) bool {
+	return rangeOf(d.selected, side, line) >= 0
+}
+
+// rangeOf returns the index of the range of rs holding a line of a side,
+// or -1.
+func rangeOf(rs []DiffLineRange, side DiffSide, line int) int {
+	for i, r := range rs {
+		if r.Side == side && line >= r.Start && line <= r.End {
+			return i
+		}
+	}
+	return -1
+}
+
+// normalRanges sorts ranges by side and line, joining those of a side
+// that overlap or touch, each from its start to its end.
+func normalRanges(rs []DiffLineRange) []DiffLineRange {
+	var out []DiffLineRange
+	for _, r := range rs {
+		if r.End < r.Start {
+			r.Start, r.End = r.End, r.Start
+		}
+		out = append(out, r)
+	}
+	slices.SortFunc(out, func(a, b DiffLineRange) int {
+		if a.Side != b.Side {
+			return int(a.Side) - int(b.Side)
+		}
+		return a.Start - b.Start
+	})
+	merged := out[:0]
+	for _, r := range out {
+		if n := len(merged); n > 0 && merged[n-1].Side == r.Side && r.Start <= merged[n-1].End+1 {
+			merged[n-1].End = max(merged[n-1].End, r.End)
+			continue
+		}
+		merged = append(merged, r)
+	}
+	if len(merged) == 0 {
+		return nil
+	}
+	return merged
+}
+
+// withoutLine returns rs without a line of a side.
+func withoutLine(rs []DiffLineRange, side DiffSide, line int) []DiffLineRange {
+	var out []DiffLineRange
+	for _, r := range rs {
+		if r.Side != side || line < r.Start || line > r.End {
+			out = append(out, r)
+			continue
+		}
+		if r.Start < line {
+			out = append(out, DiffLineRange{Side: side, Start: r.Start, End: line - 1})
+		}
+		if line < r.End {
+			out = append(out, DiffLineRange{Side: side, Start: line + 1, End: r.End})
+		}
+	}
+	return out
 }
 
 // GoToHunk puts the caret of the active side (ActiveSide) at the start
@@ -575,24 +674,118 @@ func (d *DiffState) revealedBefore(a int) int {
 	return -1
 }
 
-// selectLine selects a line by its number, or extends the selection to
-// it from its nearer end.
-func (d *DiffState) selectLine(side DiffSide, line int, extend bool) {
+// selectLine takes a press on the number of a line: it selects the line,
+// or with Shift the lines from the anchor to it, or with Cmd adds it or
+// takes it away; a press on the only line selected clears the selection.
+// A drag from it goes on with dragLine.
+func (d *DiffState) selectLine(side DiffSide, line int, mods ui.Modifiers) {
+	at := DiffLineRange{Side: side, Start: line, End: line}
+	d.lineDrag = true
 	switch {
-	case extend && d.hasSel && d.selected.Side == side:
-		if line < d.selected.Start {
-			d.selected.Start = line
-		} else {
-			d.selected.End = line
-		}
-	case d.hasSel && d.selected.Side == side && d.selected.Start == line && d.selected.End == line:
-		d.hasSel = false
+	case mods&ui.Shift != 0 && len(d.selected) > 0:
+		d.selected = normalRanges(append(slices.Clone(d.selBase), d.span(d.selAnchor, at)...))
+	case mods&ui.Cmd != 0 && d.LineSelected(side, line):
+		d.selected = withoutLine(d.selected, side, line)
+		d.selBase, d.selAnchor, d.lineDrag = d.selected, at, false
+	case mods&ui.Cmd != 0:
+		d.selBase, d.selAnchor = slices.Clone(d.selected), at
+		d.selected = normalRanges(append(slices.Clone(d.selected), at))
+	case len(d.selected) == 1 && d.selected[0] == at:
+		d.selected, d.selBase, d.lineDrag = nil, nil, false
 	default:
-		d.selected, d.hasSel = DiffLineRange{Side: side, Start: line, End: line}, true
+		d.selected, d.selBase, d.selAnchor = []DiffLineRange{at}, nil, at
 	}
-	if d.OnLineSelection != nil && d.hasSel {
-		d.OnLineSelection(d.selected)
+	d.reportSelection(side, line)
+}
+
+// dragLine extends the selection a press on a number started to the line
+// the pointer is over.
+func (d *DiffState) dragLine(side DiffSide, line int) {
+	if !d.lineDrag {
+		return
 	}
+	sel := normalRanges(append(slices.Clone(d.selBase), d.span(d.selAnchor, DiffLineRange{Side: side, Start: line, End: line})...))
+	if slices.Equal(sel, d.selected) {
+		return
+	}
+	d.selected = sel
+	d.reportSelection(side, line)
+}
+
+// reportSelection tells OnLineSelection of the range a line is in, when
+// it is selected.
+func (d *DiffState) reportSelection(side DiffSide, line int) {
+	if d.OnLineSelection == nil {
+		return
+	}
+	if i := rangeOf(d.selected, side, line); i >= 0 {
+		d.OnLineSelection(d.selected[i])
+	}
+}
+
+// span returns the lines from line a to line b, each a range of one line
+// of its side, as they show: those of a side between them, in a split
+// view, where lines of the two sides don't select together (only b
+// then); in a unified view, the new lines and the deleted ones between
+// them, the deleted lines of a change above its first new line.
+func (d *DiffState) span(a, b DiffLineRange) []DiffLineRange {
+	if !d.sides[1].unified {
+		if a.Side != b.Side {
+			return []DiffLineRange{{Side: b.Side, Start: b.Start, End: b.Start}}
+		}
+		return []DiffLineRange{{Side: a.Side, Start: min(a.Start, b.Start), End: max(a.Start, b.Start)}}
+	}
+	ka, kb := d.showOrder(a), d.showOrder(b)
+	if kb.less(ka) {
+		ka, kb = kb, ka
+	}
+	var out []DiffLineRange
+	for _, h := range d.model.hunks {
+		for o := h.A0; o < h.A1; o++ {
+			if k := (showKey{h.B0, 0, o}); !k.less(ka) && !kb.less(k) {
+				out = append(out, DiffLineRange{Side: DiffOld, Start: o, End: o})
+			}
+		}
+	}
+	for n := ka.line; n <= kb.line; n++ {
+		if k := (showKey{n, 1, n}); !k.less(ka) && !kb.less(k) {
+			out = append(out, DiffLineRange{Side: DiffNew, Start: n, End: n})
+		}
+	}
+	return out
+}
+
+// showKey orders the lines of a unified view as they show: by the new
+// line they show at or above, the deleted lines (new 0) above it in
+// their order.
+type showKey struct{ line, new, at int }
+
+func (k showKey) less(o showKey) bool {
+	if k.line != o.line {
+		return k.line < o.line
+	}
+	if k.new != o.new {
+		return k.new < o.new
+	}
+	return k.at < o.at
+}
+
+// showOrder returns where a line shows in a unified view: an old line of
+// a change above the change's first new line, an unchanged old one as
+// the new line it is.
+func (d *DiffState) showOrder(r DiffLineRange) showKey {
+	if r.Side == DiffNew {
+		return showKey{r.Start, 1, r.Start}
+	}
+	for _, h := range d.model.hunks {
+		if r.Start >= h.A0 && r.Start < h.A1 {
+			return showKey{h.B0, 0, r.Start}
+		}
+	}
+	if n, ok := d.model.newLineOf(r.Start); ok {
+		return showKey{n, 1, n}
+	}
+	return showKey{r.Start, 1, r.Start}
 }
 
 // activeHunk returns the hunk under the pointer on either side, or else

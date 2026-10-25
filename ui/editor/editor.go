@@ -104,6 +104,9 @@ type decor interface {
 	number(line int) int
 	paintBlock(p *ui.Painter, ed *editor, b *block, r ui.Rect)
 	blockInput(ed *editor, b *block, ev ui.InputEvent, r ui.Rect) bool
+	// dragLines takes the pointer's moves and release while a press on
+	// the number of a line drags.
+	dragLines(ed *editor, ev ui.InputEvent) bool
 }
 
 type lineLook struct {
