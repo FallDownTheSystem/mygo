@@ -67,21 +67,30 @@ func (s *diffSide) lineStyle(line int) lineLook {
 	if s.old {
 		side = DiffOld
 	}
-	if d.hasSel && d.selected.Side == side && line >= d.selected.Start && line <= d.selected.End {
-		m := ed.theme.Modified
-		bg := st.bg
-		if bg.A == 0 {
-			bg = ed.theme.Background
-		}
-		st.bg = mixLab(bg, m, 0.18)
-		g := st.gutter
-		if g.A == 0 {
-			g = ed.theme.Background
-		}
-		st.gutter = mixLab(g, m, 0.3)
-		st.number = m
-	}
+	s.markSelected(ed, side, line, &st)
 	return st
+}
+
+// markSelected tints a line's look while it is among the lines selected
+// by their numbers: the same for a side's own lines and for the deleted
+// lines a unified view paints as blocks.
+func (s *diffSide) markSelected(ed *editor, side DiffSide, line int, st *lineLook) {
+	d := s.d
+	if !d.hasSel || d.selected.Side != side || line < d.selected.Start || line > d.selected.End {
+		return
+	}
+	m := ed.theme.Modified
+	bg := st.bg
+	if bg.A == 0 {
+		bg = ed.theme.Background
+	}
+	st.bg = mixLab(bg, m, 0.18)
+	g := st.gutter
+	if g.A == 0 {
+		g = ed.theme.Background
+	}
+	st.gutter = mixLab(g, m, 0.3)
+	st.number = m
 }
 
 func (s *diffSide) words(line int) []diffRange {
@@ -161,9 +170,16 @@ func (s *diffSide) paintDeleted(p *ui.Painter, ed *editor, b *block, r ui.Rect) 
 		y += h + d.annotationHeight(DiffOld, line)
 	}
 	for _, pl := range lines {
-		if !d.NoBackground {
-			p.Fill(ui.Rect{X: text.X, Y: pl.y, W: text.W, H: pl.h}, dc.deletedLine, 0)
-			p.Fill(ui.Rect{X: r.X, Y: pl.y, W: ed.gutterW, H: pl.h}, dc.deletedGutter, 0)
+		look := lineLook{bg: dc.deletedLine, gutter: dc.deletedGutter, number: dc.deleted}
+		if d.NoBackground {
+			look.bg, look.gutter = ui.Color{}, ui.Color{}
+		}
+		s.markSelected(ed, DiffOld, pl.line, &look)
+		if look.bg.A > 0 {
+			p.Fill(ui.Rect{X: text.X, Y: pl.y, W: text.W, H: pl.h}, look.bg, 0)
+		}
+		if look.gutter.A > 0 {
+			p.Fill(ui.Rect{X: r.X, Y: pl.y, W: ed.gutterW, H: pl.h}, look.gutter, 0)
 		}
 		if !d.NoLineNumbers {
 			n := pl.line + 1
@@ -174,7 +190,7 @@ func (s *diffSide) paintDeleted(p *ui.Painter, ed *editor, b *block, r ui.Rect) 
 			lay := ed.view.shaped.get(num, ed.view.style)
 			nr := rowLayout{pieces: []rowPiece{{to: len(num), l: lay, ascii: true, width: lay.Width}}, to: len(num)}
 			var nc runColors
-			col := dc.deleted
+			col := look.number
 			ed.view.paintRow(p, &lineLayout{disp: num}, &nr, r.X+ed.gutterW-4-ed.view.charWidth*0.5-lay.Width, pl.y, &nc, func(int, ui.Color) ui.Color { return col })
 		}
 		if d.Indicators == DiffBars {
