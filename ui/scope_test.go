@@ -179,6 +179,30 @@ func TestOverlayGivesTheFocusBack(t *testing.T) {
 	}
 }
 
+// A button that goes once clicked, as Stage does as its file moves to the
+// other list, leaves the focus with the focusable panel around it, not
+// with nothing.
+func TestFocusStaysAroundAnElementThatGoes(t *testing.T) {
+	shown := true
+	tt := coreNewTester(func(c *context) {
+		coreColumn(c).Fill().Children(func() {
+			coreButton(c, "Elsewhere")
+			coreColumn(c).Grow(1).Focusable().Label("Panel").Children(func() {
+				coreColumn(c).Children(func() {
+					if shown && coreButton(c, "Stage").Clicked() {
+						shown = false
+					}
+				})
+			})
+		})
+	}, 400, 300)
+	tt.Click("Stage")
+	tt.Frame()
+	if shown || !tt.Focused("Panel") {
+		t.Errorf("the focus left the panel as its button went (shown %v)", shown)
+	}
+}
+
 func TestPopoverRestoresFocusWithToastViewport(t *testing.T) {
 	open := false
 	tt := coreNewTester(func(c *context) {

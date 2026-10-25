@@ -965,6 +965,14 @@ func (rt *engine) prune() {
 			rt.host.cancelDataDrag()
 		}
 	}
+	// The ancestors of the element with the focus, read before their states
+	// go, for the focus to stay near if the element itself goes.
+	var around []uint64
+	if s := rt.states[rt.focused]; s != nil && (s.seen != rt.frame || s.pass != rt.pass) {
+		for p := rt.states[s.parent]; p != nil && len(around) < 256; p = rt.states[p.parent] {
+			around = append(around, p.id)
+		}
+	}
 	for id, s := range rt.states {
 		if s.seen != rt.frame || s.pass != rt.pass {
 			if rt.pressed == s {
@@ -988,6 +996,19 @@ func (rt *engine) prune() {
 		}
 	}
 	rt.restoreFocus()
+	// The focus of an element that went, as a button does once what it did
+	// removes it, goes to the nearest focusable element around it that
+	// stays: else it would be of nothing, and the keyboard of no part of
+	// the window the user works in.
+	if rt.states[rt.focused] == nil {
+		for _, id := range around {
+			if s := rt.states[id]; s != nil && s.seen == rt.frame && s.pass == rt.pass &&
+				s.flags&(flagFocusable|flagFocusTarget) != 0 && s.flags&flagDisabled == 0 && s.vw > 0 {
+				rt.focused = id
+				break
+			}
+		}
+	}
 	// The focus does not stay in a page kept out of sight.
 	if s := rt.states[rt.focused]; s != nil && (s.seen != rt.frame || s.pass != rt.pass) {
 		rt.focused = 0
