@@ -179,6 +179,31 @@ func TestOverlayGivesTheFocusBack(t *testing.T) {
 	}
 }
 
+// A dialog whose button takes the focus as it comes (AutoFocus) gives the
+// focus back to what had it before, not to that button.
+func TestAutoFocusedDialogGivesTheFocusBack(t *testing.T) {
+	open := false
+	tt := coreNewTester(func(c *context) {
+		if coreButton(c, "Open").Clicked() {
+			open = true
+		}
+		coreModal(c, &open, func() {
+			coreButton(c, "Cancel")
+			if coreButton(c, "OK").AutoFocus().Clicked() {
+				open = false
+			}
+		})
+	}, 500, 400)
+	tt.Click("Open")
+	if !tt.Focused("OK") {
+		t.Fatal("OK did not take the focus as the dialog opened")
+	}
+	tt.Key(0, KeyEnter)
+	if open || !tt.Focused("Open") {
+		t.Errorf("closed by OK: the focus is not back on Open (open %v)", open)
+	}
+}
+
 // A button that goes once clicked, as Stage does as its file moves to the
 // other list, leaves the focus with the focusable panel around it, not
 // with nothing.

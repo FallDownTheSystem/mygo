@@ -125,9 +125,9 @@ func (rt *engine) overlayShortcut(e *node, mods Modifiers, key Key) bool {
 	return false
 }
 
-// openOverlay notes, as overlay id opens, the element that had the focus,
-// to give it back as the overlay closes (restoreFocus).
-func (rt *engine) openOverlay(back *node) {
+// openOverlay notes, as overlay back opens, focused, the element that had
+// the focus before it, to give it back as the overlay closes (restoreFocus).
+func (rt *engine) openOverlay(back *node, focused uint64) {
 	if back.st.born != rt.frame {
 		return
 	}
@@ -135,7 +135,7 @@ func (rt *engine) openOverlay(back *node) {
 		rt.openers = map[uint64]uint64{}
 	}
 	if _, ok := rt.openers[back.id]; !ok {
-		rt.openers[back.id] = rt.focused
+		rt.openers[back.id] = focused
 	}
 }
 
