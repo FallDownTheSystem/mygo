@@ -157,7 +157,7 @@ func (ed *editor) build(c *ui.Context, buf *Buffer, o options) ui.Element {
 			hoverAnchor, hasHover = anchor("code hover anchor", h.start)
 		}
 		ed.buildReplacements(c)
-		if ds, ok := ed.o.decor.(*diffSide); ok {
+		if ds, ok := ed.o.decor.(blockDecor); ok {
 			ds.buildBlocks(c, ed)
 		} else {
 			// A diff's viewer builds a side's bars over its separators.

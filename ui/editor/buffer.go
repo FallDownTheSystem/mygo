@@ -94,6 +94,8 @@ type logEntry struct {
 	ends     lineEnds
 	changes  []change
 	restarts []int // the buffer's restarts in text
+	// reset is set for a Reset: a new text, not an edit of the old.
+	reset bool
 }
 
 // transaction is a step of undo or redo: the edits that take it back,
@@ -299,6 +301,7 @@ func (b *Buffer) Reset(text string) {
 	b.saved, b.savedEnds = b.text, b.ends
 	b.undo, b.redo, b.openTx = nil, nil, nil
 	b.record([]change{wholeChange(old, b.text)})
+	b.log[len(b.log)-1].reset = true
 }
 
 // Set replaces the whole text as one edit, which Undo takes back.
