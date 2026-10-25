@@ -218,6 +218,16 @@ func (it *MenuItem) Shortcut(mods Modifiers, key Key) *MenuItem {
 	return it
 }
 
+// Accelerator shows keys by the item, a shortcut as mygo.MenuItem's
+// Accelerator writes it ("CmdOrCtrl+Shift+N"), for an item that does what
+// an item of the app's menus does.
+func (it *MenuItem) Accelerator(keys string) *MenuItem {
+	if it.p != nil {
+		it.p.Accelerator = keys
+	}
+	return it
+}
+
 // Chosen reports whether the item was chosen, in the frame after the user
 // chose it.
 func (it *MenuItem) Chosen() bool {
