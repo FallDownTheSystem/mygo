@@ -271,6 +271,38 @@ func (b *Backend) dropMenuFonts() {
 		procDeleteObject.Call(f.glyphs)
 	}
 	b.menuFonts = nil
+	b.menuExtra = 0
+}
+
+// menuItemExtra returns what Windows adds to the width an owner-drawn item
+// measures: twice the average width of a letter of the system's menu font,
+// as GdiGetCharDimensions measures it, at the system's DPI whatever the
+// menu's. It is neither SM_CXMENUCHECK nor at the menu's DPI: at a system
+// DPI of 168, Windows adds 24 pixels, to a menu at 168 as to one at 120,
+// where the checks are 29 and 19 wide; at 96, 14.
+func (b *Backend) menuItemExtra() int32 {
+	if b.menuExtra > 0 {
+		return b.menuExtra
+	}
+	var ncm nonClientMetrics
+	ncm.Size = uint32(unsafe.Sizeof(ncm))
+	if r, _, _ := procSystemParametersInfoW.Call(spiGetNonClientMetrics, uintptr(ncm.Size), uintptr(unsafe.Pointer(&ncm)), 0); r != 0 {
+		if font, _, _ := procCreateFontIndirectW.Call(uintptr(unsafe.Pointer(&ncm.MenuFont))); font != 0 {
+			dc, _, _ := procGetDC.Call(0)
+			const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+			w := textWidth(dc, font, letters)
+			procReleaseDC.Call(0, dc)
+			procDeleteObject.Call(font)
+			if w > 0 {
+				b.menuExtra = 2 * ((w + int32(len(letters))/2) / int32(len(letters)))
+				return b.menuExtra
+			}
+		}
+	}
+	// Without the font, the checks' width at the system's DPI, which it
+	// matches at 96.
+	check, _, _ := procGetSystemMetrics.Call(smCxMenuCheck)
+	return max(int32(check)-1, 0)
 }
 
 // The glyphs of Segoe Fluent Icons, also in Segoe MDL2 Assets.
@@ -369,9 +401,7 @@ func (b *Backend) measureItem(hwnd uintptr, l *menuLook, mis *measureItemStruct)
 	if l.submenu {
 		w += toPx(menuAccelGap/2+menuChevron, dpi)
 	}
-	// Windows adds the width of its checks to that of every item.
-	check, _, _ := procGetSystemMetricsForDpi.Call(smCxMenuCheck, uintptr(dpi))
-	w = max(w-int32(check)+1, 0)
+	w = max(w-b.menuItemExtra(), 0)
 	mis.ItemWidth, mis.ItemHeight = uint32(w), uint32(toPx(menuItemHeight, dpi)+top+bottom)
 }
 
