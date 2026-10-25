@@ -189,5 +189,13 @@
   "decimalAtLeast": "請輸入不小於 {min} 的值",
   "decimalAtMost": "請輸入不大於 {max} 的值",
   "desktopShortcut": "建立桌面捷徑",
-  "selected": "已選取"
+  "selected": "已選取",
+  "mergeResult": "結果",
+  "mergeConflictOf": "衝突 {n}/{total}",
+  "mergeTake": "使用 {version} 的行",
+  "mergeTook": "使用 {version} 的行",
+  "mergeTookBoth": "先用 {first} 的行，再用 {second} 的行",
+  "mergeTookNeither": "兩邊的行都不用",
+  "mergeEdited": "已編輯",
+  "mergeUnresolved": "未解決"
 }
