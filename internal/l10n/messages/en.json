@@ -187,5 +187,13 @@
   "decimalPlaces": "{n, plural, one {Use at most # decimal place} other {Use at most # decimal places}}",
   "decimalAtLeast": "Enter {min} or more",
   "decimalAtMost": "Enter {max} or less",
-  "desktopShortcut": "Create a desktop shortcut"
+  "desktopShortcut": "Create a desktop shortcut",
+  "mergeResult": "Result",
+  "mergeConflictOf": "Conflict {n} of {total}",
+  "mergeTake": "Use {version}'s lines",
+  "mergeTook": "Uses {version}'s lines",
+  "mergeTookBoth": "Uses {first}'s lines, then {second}'s",
+  "mergeTookNeither": "Uses neither version's lines",
+  "mergeEdited": "Edited",
+  "mergeUnresolved": "Unresolved"
 }

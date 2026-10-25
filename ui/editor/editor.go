@@ -109,6 +109,16 @@ type decor interface {
 	dragLines(ed *editor, ev ui.InputEvent) bool
 }
 
+// blockDecor is a decor with rows of its own: the lines it hides, its
+// blocks, and the elements it builds over them, as a diff's side and a
+// merge's.
+type blockDecor interface {
+	decor
+	hidden() []lineSpan
+	blocks() []block
+	buildBlocks(c *ui.Context, ed *editor)
+}
+
 type lineLook struct {
 	bg, gutter, number ui.Color
 	bar                ui.Color
