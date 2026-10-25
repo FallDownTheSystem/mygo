@@ -264,6 +264,27 @@ func TestReviewDiffDeletedLineClick(t *testing.T) {
 	}
 }
 
+// A deleted line of a unified view shows it is selected, as the lines
+// of a side do.
+func TestReviewDiffDeletedLineSelected(t *testing.T) {
+	d := &DiffState{Old: NewBuffer("a\nb\nc\n"), New: NewBuffer("a\nc\n"), Layout: DiffUnified, LineSelection: true}
+	tt := ui.NewTester(func(c *ui.Context) { DiffView(c, d).Fill() }, 500, 300)
+	tt.Frame()
+	tt.Frame()
+	ed := &d.eds[1]
+	y := int(float32(ed.view.heights.geometry(1).top-ed.scrollY) + ed.view.lineHeight/2)
+	text, gutter := 400, int(ed.gutterW/2)
+	before, beforeGutter := tt.Image().RGBAAt(text, y), tt.Image().RGBAAt(gutter, y)
+	d.SetSelectedLines(DiffLineRange{Side: DiffOld, Start: 1, End: 1}, true)
+	tt.Frame()
+	if after := tt.Image().RGBAAt(text, y); after == before {
+		t.Errorf("the selected deleted line keeps its color %v", after)
+	}
+	if after := tt.Image().RGBAAt(gutter, y); after == beforeGutter {
+		t.Errorf("the selected deleted line's number keeps its gutter %v", after)
+	}
+}
+
 // Names git quotes read as the names, in renames and new files.
 func TestReviewPatchQuotedNames(t *testing.T) {
 	files, err := ParsePatch("diff --git \"a/rn/old/\\346\\226\\207.txt\" \"b/rn/new/\\346\\226\\207.txt\"\nsimilarity index 100%\nrename from \"rn/old/\\346\\226\\207.txt\"\nrename to \"rn/new/\\346\\226\\207.txt\"\n" +
