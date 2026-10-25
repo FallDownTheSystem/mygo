@@ -55,16 +55,16 @@ func TestWindowState(t *testing.T) {
 		}
 	}
 
-	// Nothing saved: the options apply. The window is remembered once it
-	// settled, and written when it closes.
+	// Nothing saved: the options apply. The window is remembered and written
+	// once it settled, so a process ended before it quits keeps it.
 	w, fw := testWindow(t, WindowOptions{StateKey: "main", X: 100, Y: 120, Width: 700, Height: 500})
 	if o := fw.Opts; o.X != 100 || o.Y != 120 || o.Width != 700 || o.Maximized {
 		t.Errorf("first window options = %+v", o)
 	}
 	onMain(func() { fw.SetBounds(platform.Rect{X: 200, Y: 150, Width: 800, Height: 600}) })
 	captured("main", WindowState{X: 200, Y: 150, Width: 800, Height: 600})
-	if _, err := os.Stat(file); !os.IsNotExist(err) {
-		t.Errorf("states written before a window closed: %v", err)
+	if got, want := saved()["main"], (WindowState{X: 200, Y: 150, Width: 800, Height: 600}); got != want {
+		t.Errorf("written once settled: %+v, want %+v", got, want)
 	}
 	// Maximized, it keeps its normal bounds.
 	onMain(func() {
