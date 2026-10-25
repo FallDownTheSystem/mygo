@@ -574,6 +574,8 @@ func coreOverlay(c *context, fn func()) {
 	// What fn builds reads in the direction of where it was asked for.
 	dir := o.dir
 	o.dir = saved.dir &^ dirSet
+	// Read before fn, as an AutoFocus in it takes the focus as it comes.
+	focused := c.rt.focused
 	fn()
 	o.dir = dir
 	c.parent = saved
@@ -585,7 +587,7 @@ func coreOverlay(c *context, fn func()) {
 		return
 	}
 	for e := first; e != nil; e = e.next {
-		c.rt.openOverlay(e)
+		c.rt.openOverlay(e, focused)
 	}
 }
 
