@@ -75,6 +75,9 @@ func (ed *editor) dispatch(ev ui.InputEvent) bool {
 	case ui.InputPointerMove:
 		return ed.pointerMove(ev)
 	case ui.InputPointerUp:
+		if ed.o.decor != nil && ed.o.decor.dragLines(ed, ev) {
+			return true
+		}
 		if ed.gesture.active || ed.scrollbar.active {
 			ed.gesture.active = false
 			ed.scrollbar.active = false
@@ -333,6 +336,9 @@ func (ed *editor) pointerMove(ev ui.InputEvent) bool {
 	ed.pointer, ed.pointerIn = ui.Point{X: ev.X, Y: ev.Y}, ev.X >= 0 && ev.Y >= 0 && ev.X < ed.r.W && ev.Y < ed.viewH
 	if ed.scrollbar.active {
 		ed.dragScrollbar(ev)
+		return true
+	}
+	if ed.o.decor != nil && ed.o.decor.dragLines(ed, ev) {
 		return true
 	}
 	if ed.gesture.active && ev.Button == 0 {
