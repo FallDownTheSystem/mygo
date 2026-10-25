@@ -15,6 +15,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 )
 
 // writeBundle assembles <dir>/<executable>.app around the executable bin,
@@ -413,12 +414,15 @@ func codesign(c *Config, path, identity string, production bool) error {
 
 // replacePath moves src to dst, replacing what dst held. The old dst is
 // renamed away before it is removed, so a running app keeps its files.
-// Removing it is best effort: Windows keeps running executables.
+// Removing it is best effort: Windows keeps running executables, so each
+// replacement renames to a name of its own, as the app the last one
+// replaced may still run from its old name, which no rename can take
+// then; the old names that are free by now go first.
 func replacePath(src, dst string) error {
 	old := ""
 	if _, err := os.Lstat(dst); err == nil {
-		old = filepath.Join(filepath.Dir(dst), fmt.Sprintf(".old-%d-%s", os.Getpid(), filepath.Base(dst)))
-		_ = os.RemoveAll(old)
+		removeOldPaths(dst)
+		old = filepath.Join(filepath.Dir(dst), fmt.Sprintf(".old-%d-%d-%s", os.Getpid(), time.Now().UnixNano(), filepath.Base(dst)))
 		if err := os.Rename(dst, old); err != nil {
 			return err
 		}
@@ -433,6 +437,21 @@ func replacePath(src, dst string) error {
 		_ = os.RemoveAll(old)
 	}
 	return nil
+}
+
+// removeOldPaths removes what earlier replacements of dst left, as far
+// as nothing runs from them any more.
+func removeOldPaths(dst string) {
+	dir, base := filepath.Dir(dst), filepath.Base(dst)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		if name := e.Name(); strings.HasPrefix(name, ".old-") && strings.HasSuffix(name, "-"+base) {
+			_ = os.RemoveAll(filepath.Join(dir, name))
+		}
+	}
 }
 
 func copyFile(src, dst string, mode os.FileMode) error {
