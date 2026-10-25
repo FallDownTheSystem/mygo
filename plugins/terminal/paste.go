@@ -122,6 +122,15 @@ func (t *Terminal) pasteData(d transfer.Data, held []transfer.Format) {
 		status = PasteOffered
 	} else {
 		text, _ := o.data.Read(transfer.Text)
+		if len(text) == 0 {
+			// Files copied, as in Explorer or by a screenshot tool, paste
+			// as their paths, as they drop (dropFiles) and as Windows
+			// Terminal pastes them: a program that takes images, as Claude
+			// Code, reads only an image from the clipboard, not a file.
+			if files, _ := o.data.Files(); len(files) > 0 {
+				text = []byte(t.quoting.quoteAll(files))
+			}
+		}
 		bracketed := t.term.Mode(vt.ModeBracketedPaste)
 		switch {
 		case len(text) > 0:
@@ -303,11 +312,7 @@ func (t *Terminal) dropFiles(paths []string) {
 	if len(paths) == 0 {
 		return
 	}
-	escaped := make([]string, len(paths))
-	for i, p := range paths {
-		escaped[i] = t.quoting.quote(p)
-	}
-	text := transfer.Bytes(transfer.Text, []byte(strings.Join(escaped, " ")))
+	text := transfer.Bytes(transfer.Text, []byte(t.quoting.quoteAll(paths)))
 	d, err := transfer.FileData(paths...)
 	if err != nil {
 		t.PasteData(transfer.New(transfer.NewItem(text)))
@@ -368,6 +373,16 @@ func quotingFor(goos string, program string) quoting {
 		return quotePowerShell
 	}
 	return quotePOSIX
+}
+
+// quoteAll quotes paths for the shell, spaces between them, so that it
+// takes them as arguments.
+func (q quoting) quoteAll(paths []string) string {
+	quoted := make([]string, len(paths))
+	for i, p := range paths {
+		quoted[i] = q.quote(p)
+	}
+	return strings.Join(quoted, " ")
 }
 
 // quote quotes a path for the shell.
