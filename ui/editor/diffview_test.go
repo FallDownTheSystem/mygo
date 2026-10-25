@@ -230,6 +230,66 @@ func TestDiffViewerLineSelection(t *testing.T) {
 	}
 }
 
+// In a unified view, the numbers of deleted lines and of added ones
+// select together as they show: dragged over, Shift-clicked from the
+// anchor, and Cmd-clicked one by one.
+func TestDiffViewerLineSelectionUnified(t *testing.T) {
+	d := &DiffState{Old: NewBuffer("a\nb\nc\nd\n"), New: NewBuffer("a\nX\nY\nd\n"), Layout: DiffUnified, ExpandUnchanged: true, LineSelection: true}
+	tt := ui.NewTester(func(c *ui.Context) { DiffView(c, d).Fill() }, 600, 400)
+	tt.Frame()
+	tt.Frame()
+	ed := &d.eds[1]
+	lh := ed.view.lineHeight
+	x := ed.gutterW - 8
+	deleted := float32(ed.view.heights.geometry(1).top-ed.scrollY) + lh/2
+	oldY := func(l int) float32 { return deleted + float32(l-1)*lh } // b and c, above X
+	newY := func(l int) float32 { return float32(ed.view.heights.geometry(l).rows-ed.scrollY) + lh/2 }
+	want := func(what string, rs ...DiffLineRange) {
+		t.Helper()
+		if got := d.SelectedRanges(); !slices.Equal(got, rs) {
+			t.Fatalf("%s: selected %+v, want %+v", what, got, rs)
+		}
+	}
+
+	tt.Press(x, oldY(1))
+	tt.Move(x, newY(1))
+	tt.Release(x, newY(1))
+	want("dragging from b to X", DiffLineRange{DiffOld, 1, 2}, DiffLineRange{DiffNew, 1, 1})
+	tt.Move(x, newY(3))
+	want("moving after the release", DiffLineRange{DiffOld, 1, 2}, DiffLineRange{DiffNew, 1, 1})
+
+	tt.ClickAtWith(ui.Cmd, x, newY(2))
+	want("Cmd-clicking Y", DiffLineRange{DiffOld, 1, 2}, DiffLineRange{DiffNew, 1, 2})
+	tt.ClickAtWith(ui.Cmd, x, oldY(2))
+	want("Cmd-clicking c again", DiffLineRange{DiffOld, 1, 1}, DiffLineRange{DiffNew, 1, 2})
+
+	tt.ClickAt(x, newY(2))
+	want("clicking Y", DiffLineRange{DiffNew, 2, 2})
+	tt.ClickAtWith(ui.Shift, x, oldY(1))
+	want("Shift-clicking b", DiffLineRange{DiffOld, 1, 2}, DiffLineRange{DiffNew, 1, 2})
+	if !d.LineSelected(DiffOld, 2) || d.LineSelected(DiffNew, 3) {
+		t.Error("LineSelected disagrees with the selection")
+	}
+}
+
+// In a split view, a drag over the old side's numbers selects its lines.
+func TestDiffViewerLineSelectionSplit(t *testing.T) {
+	d := &DiffState{Old: NewBuffer("a\nb\nc\nd\n"), New: NewBuffer("a\nX\nY\nd\n"), Layout: DiffSplit, ExpandUnchanged: true, LineSelection: true}
+	tt := ui.NewTester(func(c *ui.Context) { DiffView(c, d).Fill() }, 800, 400)
+	tt.Frame()
+	tt.Frame()
+	ed := &d.eds[0]
+	lh := ed.view.lineHeight
+	y := func(l int) float32 { return float32(ed.view.heights.geometry(l).rows-ed.scrollY) + lh/2 }
+	x := ed.r.X + ed.gutterW - 8
+	tt.Press(x, y(1))
+	tt.Move(x, y(3))
+	tt.Release(x, y(3))
+	if got, want := d.SelectedRanges(), []DiffLineRange{{DiffOld, 1, 3}}; !slices.Equal(got, want) {
+		t.Fatalf("selected %+v, want %+v", got, want)
+	}
+}
+
 // The app runs commands and reads the caret in the side that has the
 // keyboard, or had it last: the new side's until the old one has it.
 func TestDiffViewerActiveSide(t *testing.T) {
