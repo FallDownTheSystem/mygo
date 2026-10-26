@@ -155,6 +155,9 @@ type Font struct {
 	// Ascent, Descent and LineGap are the font's vertical metrics in
 	// DIPs.
 	Ascent, Descent, LineGap float32
+	// XHeight and CapHeight are how high a lowercase x and a capital
+	// stand on the baseline, in DIPs; 0 when the engine doesn't know.
+	XHeight, CapHeight float32
 
 	native uintptr // the engine's font
 	// shaded fonts' glyphs differ by the shade of the text; thin ones are

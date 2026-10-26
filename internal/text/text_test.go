@@ -43,6 +43,28 @@ func TestLayoutWraps(t *testing.T) {
 	}
 }
 
+// A line's letters center in it, halfway between its x-height and its
+// cap height, at the font's line height and at a taller one, as an icon
+// centered beside them does, rather than sitting low as the font's
+// ascent, deeper than its descent, leaves them.
+func TestLettersCentered(t *testing.T) {
+	s := Shared()
+	style := Style{Size: 13}
+	s.mu.Lock()
+	f := s.font(style)
+	s.mu.Unlock()
+	if f == nil || f.XHeight <= 0 || f.CapHeight <= 0 {
+		t.Skip("the engine doesn't know the font's x-height and cap height")
+	}
+	for _, lh := range []float32{0, 1.6} {
+		style.LineHeight = lh
+		line := s.Layout(Params{Text: "Hx", Style: style}).Lines[0]
+		if d := line.Baseline - (f.XHeight+f.CapHeight)/4 - (line.Y + line.Height/2); math.Abs(float64(d)) > 0.01 {
+			t.Errorf("line height %v: letters %v below the middle", lh, d)
+		}
+	}
+}
+
 func TestLayoutNewlinesAndEmpty(t *testing.T) {
 	s := Shared()
 	l := s.Layout(Params{Text: "a\n\nb", Style: Style{Size: 14}})

@@ -158,8 +158,12 @@ func (e *canvasEngine) font(style Style) *Font {
 	thick := max(size/14, 1)
 	f.underlineTop, f.underlineThick = -size/10, thick
 	x := e.ctx.Call("measureText", "x").Get("actualBoundingBoxAscent")
+	if h := e.ctx.Call("measureText", "H").Get("actualBoundingBoxAscent"); h.Type() == js.TypeNumber {
+		f.CapHeight = float32(h.Float())
+	}
 	if x.Type() == js.TypeNumber {
-		f.strikeTop = float32(x.Float())/2 + thick/2
+		f.XHeight = float32(x.Float())
+		f.strikeTop = f.XHeight/2 + thick/2
 	} else {
 		f.strikeTop = size * 0.3
 	}
