@@ -1409,6 +1409,26 @@ func TestKeyWithoutText(t *testing.T) {
 	}
 }
 
+// TestAltGrTypesText: AltGr, which is Control and Alt on Windows, types
+// the character it makes, not Control and the key.
+func TestAltGrTypesText(t *testing.T) {
+	if runtime.GOOS != "windows" {
+		t.Skip("AltGr is Control and Alt on Windows alone")
+	}
+	loadLib(t)
+	conn := newPipe()
+	term, err := New(Options{Conn: conn})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer term.Close()
+	tt := ui.NewTester(func(c *ui.Context) { View(c, term).Fill().AutoFocus() }, 400, 200)
+	tt.TypeKey(ui.Ctrl|ui.Alt, ui.KeyQ, "ä")
+	if got := conn.take(term); got != "ä" {
+		t.Errorf("sent %q", got)
+	}
+}
+
 func TestCloseKillsWhatIgnoresHangups(t *testing.T) {
 	loadLib(t)
 	term := shell(t, Options{Command: []string{"/bin/sh", "-c", "trap '' HUP; echo ready; sleep 30"}})
