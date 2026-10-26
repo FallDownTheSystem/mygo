@@ -45,7 +45,7 @@ type FontMetrics struct {
 
 // Metrics returns the font's metrics.
 func (f Font) Metrics() FontMetrics {
-	a, d, h := text.Shared().Metrics(f.style())
+	a, d, h, _ := text.Shared().Metrics(f.style())
 	return FontMetrics{Ascent: a, Descent: d, LineGap: max(h-a-d, 0)}
 }
 
