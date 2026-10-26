@@ -825,16 +825,23 @@ func (v *view) typed(text string) {
 		return
 	}
 	var consumed vt.Mods
+	mods := p.mods
 	r, _ := utf8.DecodeRuneInString(text)
 	if r != p.unshifted {
+		if runtime.GOOS == "windows" && mods&(ui.Ctrl|ui.Alt) == ui.Ctrl|ui.Alt {
+			// AltGr, which is Control and Alt on Windows, made the
+			// character: the encoder, seeing Control, would send Control
+			// and the key in its place, as consumed or not.
+			mods &^= ui.Ctrl | ui.Alt
+		}
 		// Shift or Option made the character.
-		consumed = vtMods(p.mods & (ui.Shift | ui.Alt))
+		consumed = vtMods(mods & (ui.Shift | ui.Alt))
 	}
 	action := vt.KeyPress
 	if p.repeat {
 		action = vt.KeyRepeat
 	}
-	v.sendKey(vt.KeyEvent{Action: action, Key: p.key, Mods: vtMods(p.mods), Consumed: consumed, Text: text, Unshifted: p.unshifted})
+	v.sendKey(vt.KeyEvent{Action: action, Key: p.key, Mods: vtMods(mods), Consumed: consumed, Text: text, Unshifted: p.unshifted})
 }
 
 // sendKey sends a key, scrolling to the bottom and clearing the selection
