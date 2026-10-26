@@ -32,6 +32,7 @@ type view struct {
 	lineHeight float32
 	ascent     float32
 	descent    float32
+	raise      float32 // text.CenteredBaseline's, as other text's lines
 	charWidth  float32 // the advance of "0", for columns
 	textGen    uint64  // the text system's generation the widths are of
 	tabSize    int
@@ -128,8 +129,8 @@ type lineLayout struct {
 	used  uint64
 	// owner is the view that laid it out: the editor's, or for a styled
 	// line its style's (styledView), whose metrics its rows have.
-	owner                      *view
-	rowHeight, ascent, descent float32
+	owner                             *view
+	rowHeight, ascent, descent, raise float32
 }
 
 // dispSeg maps a run of the displayed text to the line's: text, a tab
@@ -425,8 +426,8 @@ func (v *view) setStyle(f ui.Font, lineHeight, scale float32, tabSize int) {
 	v.font, v.style, v.lineHeight, v.tabSize, v.scale = f, style, lh, tabSize, scale
 	v.heights.lh = lh
 	v.heights.dirty = true
-	a, d, _ := sys.Metrics(style)
-	v.ascent, v.descent = a, d
+	a, d, _, raise := sys.Metrics(style)
+	v.ascent, v.descent, v.raise = a, d, raise
 	v.widths.reset(style, sys)
 	v.charWidth = v.widths.of('0')
 	if fontChanged {
@@ -608,7 +609,7 @@ func (v *view) line(n int) *lineLayout {
 		}
 		return l
 	}
-	l := &lineLayout{n: n, used: v.lines.frame, owner: v, rowHeight: v.lineHeight, ascent: v.ascent, descent: v.descent}
+	l := &lineLayout{n: n, used: v.lines.frame, owner: v, rowHeight: v.lineHeight, ascent: v.ascent, descent: v.descent, raise: v.raise}
 	l.start = v.text.LineStart(n)
 	l.text = v.text.Slice(l.start, v.text.LineEnd(n))
 	l.toks, l.exact = v.tokens(n, l.text, nil)
@@ -1562,11 +1563,11 @@ func (v *view) paintRow(p *ui.Painter, l *lineLayout, r *rowLayout, x, y float32
 	clip := p.Visible()
 	// A styled line's rows have its style's metrics; rows made to paint
 	// alone, as the gutter's numbers, the view's.
-	rowHeight, ascent, descent := l.rowHeight, l.ascent, l.descent
+	rowHeight, ascent, descent, raise := l.rowHeight, l.ascent, l.descent, l.raise
 	if rowHeight <= 0 {
-		rowHeight, ascent, descent = v.lineHeight, v.ascent, v.descent
+		rowHeight, ascent, descent, raise = v.lineHeight, v.ascent, v.descent, v.raise
 	}
-	baseline := y + (rowHeight-(ascent+descent))/2 + ascent
+	baseline := text.CenteredBaseline(y, rowHeight, ascent, descent, raise)
 	def := v.theme.Text
 	for pi := range r.pieces {
 		pc := &r.pieces[pi]
