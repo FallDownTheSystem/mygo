@@ -123,6 +123,7 @@ var ct struct {
 	fontGetUnderlinePos   func(font uintptr) float64
 	fontGetUnderlineThick func(font uintptr) float64
 	fontGetXHeight        func(font uintptr) float64
+	fontGetCapHeight      func(font uintptr) float64
 	fontGetUnitsPerEm     func(font uintptr) uint32
 	fontCopyTable         func(font uintptr, tag uint32, options uint32) uintptr
 	fontCreatePath        func(font uintptr, glyph uint16, matrix uintptr) uintptr
@@ -222,6 +223,7 @@ func loadCoreText() error {
 	bind(text, &ct.fontGetUnderlinePos, "CTFontGetUnderlinePosition")
 	bind(text, &ct.fontGetUnderlineThick, "CTFontGetUnderlineThickness")
 	bind(text, &ct.fontGetXHeight, "CTFontGetXHeight")
+	bind(text, &ct.fontGetCapHeight, "CTFontGetCapHeight")
 	bind(text, &ct.fontGetUnitsPerEm, "CTFontGetUnitsPerEm")
 	bind(text, &ct.fontCopyTable, "CTFontCopyTable")
 	bind(text, &ct.fontCreatePath, "CTFontCreatePathForGlyph")
@@ -906,12 +908,14 @@ func (e *coreText) fontOf(font uintptr) *Font {
 	ct.retain(font)
 	color := ct.fontGetSymbolicTraits(font)&ctFontColorGlyphsTrait != 0
 	f := &Font{
-		Size:    float32(ct.fontGetSize(font)),
-		Ascent:  float32(ct.fontGetAscent(font)),
-		Descent: float32(ct.fontGetDescent(font)),
-		LineGap: float32(ct.fontGetLeading(font)),
-		native:  font,
-		shaded:  e.smooth && !color,
+		Size:      float32(ct.fontGetSize(font)),
+		Ascent:    float32(ct.fontGetAscent(font)),
+		Descent:   float32(ct.fontGetDescent(font)),
+		LineGap:   float32(ct.fontGetLeading(font)),
+		XHeight:   float32(ct.fontGetXHeight(font)),
+		CapHeight: float32(ct.fontGetCapHeight(font)),
+		native:    font,
+		shaded:    e.smooth && !color,
 		// Smoothing thickens glyphs, whatever the user's setting.
 		thickens: !color,
 		color:    color,
