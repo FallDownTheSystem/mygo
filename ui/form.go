@@ -291,17 +291,17 @@ func inputBorder(t *Theme, box, in *node) {
 // takes the baseline a line of the others' text centered on its first
 // control would have.
 func alignBaselines(e *node) {
-	var ascent, descent float32
-	for ch := e.first; ch != nil && ascent == 0; ch = ch.next {
-		if l := firstLine(ch); l != nil && ch.flags&flagAbsolute == 0 {
-			ascent, descent = l.Ascent, l.Descent
+	var line *text.Line
+	for ch := e.first; ch != nil && line == nil; ch = ch.next {
+		if l := firstLine(ch); l != nil && l.Ascent > 0 && ch.flags&flagAbsolute == 0 {
+			line = l
 		}
 	}
-	if ascent == 0 {
+	if line == nil {
 		return
 	}
 	at := func(ch *node) (float32, bool) {
-		b, _, ok := anchor(ch, ascent, descent)
+		b, _, ok := anchor(ch, line)
 		return b, ok
 	}
 	var top float32
@@ -327,8 +327,9 @@ func alignBaselines(e *node) {
 // as a row of swatches, lines up with its label rather than with a
 // description under it. In a row, whose children sit side by side, text
 // comes before what is drawn beside it, as a status dot or an icon. text
-// reports whether the baseline is that of a text.
-func anchor(e *node, ascent, descent float32) (b float32, text, ok bool) {
+// reports whether the baseline is that of a text. line is the row's first
+// line of text, whose metrics the line centered takes.
+func anchor(e *node, line *text.Line) (b float32, isText, ok bool) {
 	if e.flags&flagInvisible != 0 || e.hidden {
 		return 0, false, false
 	}
@@ -341,7 +342,7 @@ func anchor(e *node, ascent, descent float32) (b float32, text, ok bool) {
 			return b, true, true
 		}
 		if e.h > 0 {
-			return e.h/2 + (ascent-descent)/2, false, true
+			return text.CenteredBaseline(0, e.h, line.Ascent, line.Descent, line.Raise), false, true
 		}
 		return 0, false, false
 	}
@@ -351,12 +352,12 @@ func anchor(e *node, ascent, descent float32) (b float32, text, ok bool) {
 		if ch.flags&(flagAbsolute|flagInvisible) != 0 {
 			continue
 		}
-		b, text, ok := anchor(ch, ascent, descent)
+		b, isText, ok := anchor(ch, line)
 		if !ok {
 			continue
 		}
-		if text || !e.row {
-			return ch.y + b, text, true
+		if isText || !e.row {
+			return ch.y + b, isText, true
 		}
 		if !found {
 			first, found = ch.y+b, true
