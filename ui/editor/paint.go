@@ -9,6 +9,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/egoist/mygo/internal/text"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -767,7 +768,7 @@ func (ed *editor) paintGutter(p *ui.Painter, r ui.Rect, f *frame) {
 			ny := y
 			if v.rowHeight(line) != lh {
 				l := v.line(line)
-				ny = y + (l.rowHeight-(l.ascent+l.descent))/2 + l.ascent - ((lh-(v.ascent+v.descent))/2 + v.ascent)
+				ny = text.CenteredBaseline(y, l.rowHeight, l.ascent, l.descent, l.raise) - text.CenteredBaseline(0, lh, v.ascent, v.descent, v.raise)
 			}
 			var style lineLook
 			if ed.o.decor != nil {
