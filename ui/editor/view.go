@@ -32,6 +32,7 @@ type view struct {
 	lineHeight float32
 	ascent     float32
 	descent    float32
+	raise      float32 // text.CenteredBaseline's, as other text's lines
 	charWidth  float32 // the advance of "0", for columns
 	tabSize    int
 	wrap       bool
@@ -340,8 +341,8 @@ func (v *view) setStyle(f ui.Font, lineHeight, scale float32, tabSize int) {
 	v.font, v.style, v.lineHeight, v.tabSize, v.scale = f, style, lh, tabSize, scale
 	v.heights.lh = lh
 	v.heights.dirty = true
-	a, d, _ := text.Shared().Metrics(style)
-	v.ascent, v.descent = a, d
+	a, d, _, raise := text.Shared().Metrics(style)
+	v.ascent, v.descent, v.raise = a, d, raise
 	v.widths.reset(style)
 	v.charWidth = v.widths.of('0')
 	if fontChanged {
@@ -1109,7 +1110,7 @@ func (cc *runColors) at(d int, def ui.Color) ui.Color {
 // y, colored by cc, or by override when given.
 func (v *view) paintRow(p *ui.Painter, l *lineLayout, r *rowLayout, x, y float32, cc *runColors, override func(d int, c ui.Color) ui.Color) {
 	clip := p.Visible()
-	baseline := y + (v.lineHeight-(v.ascent+v.descent))/2 + v.ascent
+	baseline := text.CenteredBaseline(y, v.lineHeight, v.ascent, v.descent, v.raise)
 	def := v.theme.Text
 	for pi := range r.pieces {
 		pc := &r.pieces[pi]

@@ -280,8 +280,9 @@ type Line struct {
 	// X, Y, Width and Height are the line's box; X includes the alignment.
 	X, Y, Width, Height float32
 	// Baseline is the y of the baseline; Ascent and Descent the extent of
-	// the fonts above and below it.
-	Baseline, Ascent, Descent float32
+	// the fonts above and below it; Raise how far above the baseline that
+	// would center that extent it is (CenteredBaseline).
+	Baseline, Ascent, Descent, Raise float32
 	// Start and End are the line's runes; a newline ending it is not
 	// included.
 	Start, End int
@@ -809,12 +810,41 @@ func (s *System) Shape(p Params) *Layout {
 	return &s.layout(p).layout
 }
 
-// Metrics returns the ascent, descent and default line height of a style.
-func (s *System) Metrics(style Style) (ascent, descent, lineHeight float32) {
+// Metrics returns the ascent, descent and default line height of a style,
+// and how far its lines raise their baseline (CenteredBaseline).
+func (s *System) Metrics(style Style) (ascent, descent, lineHeight, raise float32) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	m := metricsOf(s.font(style), style)
-	return m.ascent, m.descent, m.lineHeight
+	return m.ascent, m.descent, m.lineHeight, m.raise
+}
+
+// CenteredBaseline returns the baseline of a line of a font's ascent and
+// descent in a box top to top+height, raise above the one that centers
+// that extent. A font's ascent makes room for accents above capitals,
+// and is often much deeper than its descent, so that the extent centered
+// leaves the letters below the middle, under an icon centered beside
+// them: raised as the font says (Raise), the letters center instead.
+func CenteredBaseline(top, height, ascent, descent, raise float32) float32 {
+	return top + (height-ascent-descent)/2 + ascent - raise
+}
+
+// Raise returns how far a font raises the baseline of its lines over the
+// one that centers its ascent and descent, for its letters to center:
+// the height halfway between its x-height and its cap height. Words are
+// mostly lowercase, which centered on capitals sit low, but have capitals
+// and ascenders over it, which centered on the x-height sit high. A
+// height the font doesn't know stands for the other; with neither, none.
+func Raise(ascent, descent, xHeight, capHeight float32) float32 {
+	switch {
+	case xHeight <= 0 && capHeight <= 0:
+		return 0
+	case xHeight <= 0:
+		xHeight = capHeight
+	case capHeight <= 0:
+		capHeight = xHeight
+	}
+	return (ascent - descent - (xHeight+capHeight)/2) / 2
 }
 
 // font returns the font of a style.
@@ -833,7 +863,7 @@ func (s *System) font(style Style) *Font {
 
 // lineMetrics are the vertical metrics of a style's lines.
 type lineMetrics struct {
-	ascent, descent, lineHeight float32
+	ascent, descent, lineHeight, raise float32
 }
 
 func metricsOf(f *Font, style Style) lineMetrics {
@@ -842,6 +872,7 @@ func metricsOf(f *Font, style Style) lineMetrics {
 	gap := float32(0)
 	if f != nil && f.Ascent > 0 {
 		m.ascent, m.descent, gap = f.Ascent, f.Descent, max(f.LineGap, 0)
+		m.raise = Raise(f.Ascent, f.Descent, f.XHeight, f.CapHeight)
 	}
 	m.lineHeight = m.ascent + m.descent + gap
 	if style.LineHeight > 0 {
@@ -988,7 +1019,9 @@ func glyphCount(sl shapedLine) int {
 // offset of the layout, with its top at *y, and moves *y past it. Its
 // glyphs go to room, which has room for those of sl; buf is a buffer.
 func line(p Params, text []rune, sl shapedLine, offset int, rtl bool, m lineMetrics, y *float32, room []Glyph, buf *[]int, spans []Span) Line {
-	line := Line{Start: offset + sl.start, End: offset + sl.end, RTL: rtl, Ascent: m.ascent, Descent: m.descent}
+	// Raised as the style's font says, whatever fallback fonts deepen the
+	// line, so that its text lines up with that of lines without them.
+	line := Line{Start: offset + sl.start, End: offset + sl.end, RTL: rtl, Ascent: m.ascent, Descent: m.descent, Raise: m.raise}
 	if cap(room) > 0 {
 		line.Glyphs = room
 	}
@@ -1055,8 +1088,14 @@ func line(p Params, text []rune, sl shapedLine, offset int, rtl bool, m lineMetr
 	}
 	line.Width = max(line.Width, 0)
 	line.Height = max(m.lineHeight, line.Ascent+line.Descent)
+	if line.Ascent > m.ascent {
+		// What stands higher than the font, an inline object or a
+		// fallback font, may be ink to its top, unlike the font's room for
+		// accents: raised, it stays in the line.
+		line.Raise = max(min(line.Raise, (line.Height-line.Ascent-line.Descent)/2), 0)
+	}
 	line.Y = *y
-	line.Baseline = *y + (line.Height-line.Ascent-line.Descent)/2 + line.Ascent
+	line.Baseline = CenteredBaseline(*y, line.Height, line.Ascent, line.Descent, line.Raise)
 	for i := range line.Glyphs {
 		line.Glyphs[i].X -= x0
 		line.Glyphs[i].Y += line.Baseline
