@@ -2745,7 +2745,9 @@ either.
   the frame (`popupMenu`), and the item chosen comes back to the function
   in the frame after, matched by place and label. A menu button opens as
   the primary button goes down on it, taking the release, as AppKit's and
-  GTK's pop-up buttons do, and for Enter, Space and Down.
+  GTK's pop-up buttons do, and for Enter, Space and Down. A toolbar's
+  overflow menu asks for an overflowed menu button's menu after the pass
+  built the button (`askMenuLater`), so the next pass builds it.
 - **Routers** (`ui/router.go`). A `Router` is a history of entries, each
   a location (an escaped path and its query) and the pages showing it, one
   per level of views: `View`'s, then each `Route.View` inside a layout's
@@ -3144,7 +3146,11 @@ either.
   not fire, and the accessibility tree is the dialog's layer and what is
   above it. Overlays register Escape as overlay shortcuts
   (`OverlayShortcut`), which the keys the focus and the elements around it
-  leave reach, the last registered (the overlay on top) first. Each element
+  leave reach, the last registered (the overlay on top) first. An element
+  takes one key a frame (`routeKeys`): from a second key for it, the keys
+  wait for the next frame, which the first changed, as a Down and an
+  Enter typed quickly into a menu, the Enter choosing the item the Down
+  highlighted. Each element
   built at the top of `Overlay` notes the focus as it opens (`openers`),
   which pruning gives back once it is gone with the focus that was in it.
   An element attached to another (`AttachTo`, which `PopoverBase` and the
@@ -3285,7 +3291,14 @@ either.
   function again at once, as the choice from a menu of the system's does
   in the next frame, or does its editing command; the overlay going gives
   the focus back to the element that had it. A menu whose element a pass
-  does not build closes (`resolveMenu`).
+  does not build closes (`resolveMenu`). `PopoverMenuButton` draws a menu
+  button's menu so (`drawnMenu.below`): opened below the button itself
+  (`menuState.below`, which `openMenuButton` sets), its panel attaches to
+  the button's bottom, flipping above it, and the button shows expanded;
+  opened from a toolbar's overflow menu, it goes at the overflow button's
+  corner as a context menu goes at its point. Opened by the keys or
+  assistive technology (`menuState.key`), it starts on its first item,
+  and a press on the button while it shows closes it (`buildMenu`).
 - **Scenes** are flat lists of operations in device pixels: rounded
   rectangles with borders of a width per side, solid or dashed, filled
   with a color, a linear gradient mixed in sRGB or Oklab, a gradient of
