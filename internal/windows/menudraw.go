@@ -59,23 +59,27 @@ var (
 // the next): a highlight inset from the menu's sides and from the next
 // items with rounded corners, the text past its padding, shortcuts in
 // WinUI's Caption, and marks (checks, the submenus' chevrons) in a column
-// of their own. Separators are File Explorer's, 9 tall.
+// of their own. Separators are File Explorer's, 9 tall. Kero's: rows as
+// compact as its lists', 26 apart rather than WinUI's 32, with 10 of
+// padding.
 const (
-	menuItemHeight      = 32
+	menuItemHeight      = 26
 	menuSeparatorHeight = 9
 	menuInset           = 4  // the highlight from the menu's sides
 	menuItemMargin      = 2  // the highlight from the item's top and bottom
 	menuEdge            = 2  // the menu's padding above its first item and below its last
-	menuPadding         = 11 // the text from the highlight's sides
+	menuPadding         = 10 // the text from the highlight's sides
 	menuRadius          = 4
 	menuMarkColumn      = 16 + 12 // a check, and the gap after it
 	menuAccelGap        = 24      // the least between a label and its shortcut
 	menuChevronGap      = 24      // the least between a label and a submenu's chevron
 	menuChevron         = 12
 	menuGlyphSize       = 12
-	// menuLabelSize and menuAccelSize are the sizes of WinUI's labels
-	// (Body) and shortcuts (Caption), to the 12 of the system's menu font.
-	menuLabelSize = 14
+	// menuLabelSize and menuAccelSize are the sizes of the labels and of
+	// WinUI's shortcuts (Caption), to the 12 of the system's menu font.
+	// Kero's labels keep the menu font's own size, its text's, where
+	// WinUI's (Body) grow to 14.
+	menuLabelSize = 12
 	menuAccelSize = 12
 )
 
@@ -298,8 +302,8 @@ type nonClientMetrics struct {
 }
 
 // menuFace returns the fonts of popup items at dpi: WinUI's text, in the
-// optical sizes it takes at their sizes (Text and Small) and at its 14
-// pixels for the labels and 12 for the shortcuts, scaled by the size of
+// optical sizes it takes at their sizes (Text and Small) and at 12 pixels
+// for the labels (menuLabelSize) and the shortcuts, scaled by the size of
 // text of Accessibility as the menu font is, where the menu font of the
 // system is Segoe UI: Segoe UI Variable is what WinUI's text is on Windows
 // 11, its CJK glyphs and the rest through the fonts Windows links.
