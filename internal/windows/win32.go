@@ -700,8 +700,20 @@ func dpiOf(hwnd uintptr) int {
 }
 
 // Conversions between DIPs (the unit of the public API) and pixels.
-func toPx(v, dpi int) int32      { return int32((v*dpi + 48) / 96) }
-func toDIP(v int32, dpi int) int { return (int(v)*96 + dpi/2) / dpi }
+func toPx(v, dpi int) int32      { return int32(divRound(v*dpi, 96)) }
+func toDIP(v int32, dpi int) int { return divRound(int(v)*96, dpi) }
+
+// divRound divides n by d, which is positive, rounding halves away from
+// zero. Integer division truncates toward zero, so the negative
+// coordinates of a display left of or above the primary one rounded up
+// while positive ones rounded to the nearest: a window there, its bounds
+// saved and restored in DIPs, moved right and down on every launch.
+func divRound(n, d int) int {
+	if n < 0 {
+		return -((-n + d/2) / d)
+	}
+	return (n + d/2) / d
+}
 
 // commonControl resolves a function of the common controls library. It is
 // loaded by name, so that the activation context (see

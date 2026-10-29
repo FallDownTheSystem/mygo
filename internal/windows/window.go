@@ -57,6 +57,7 @@ type window struct {
 
 	minW, minH, maxW, maxH int // DIPs
 	movable, closable      bool
+	placing                bool // in placeInitially
 	frameless              bool
 	hiddenTitleBar         bool        // a TitleBarStyle that hides the caption
 	caption                *captionBar // the controls in its place, nil if they failed
@@ -290,6 +291,10 @@ func (w *window) placeInitially() {
 		mon = monitorAt(o.X, o.Y)
 	}
 	dpi := monitorDPI(mon)
+	// Moved to a monitor of another DPI, the window gets WM_DPICHANGED,
+	// whose rectangle would scale the size already in that DPI again.
+	w.placing = true
+	defer func() { w.placing = false }()
 	width, height := toPx(o.Width, dpi), toPx(o.Height, dpi)
 	if o.UseContentSize {
 		width, height = w.outerSize(width, height, dpi)
@@ -482,6 +487,9 @@ func (w *window) message(m uint32, wp, lp uintptr) (uintptr, bool) {
 		}
 		return 0, true
 	case wmDpiChanged:
+		if w.placing {
+			return 0, true
+		}
 		r := (*rect)(native(lp))
 		procSetWindowPos.Call(w.hwnd, 0, uintptr(r.Left), uintptr(r.Top), uintptr(r.Right-r.Left), uintptr(r.Bottom-r.Top), swpNoZOrder|swpNoActivate)
 		return 0, true
