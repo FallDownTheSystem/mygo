@@ -52,12 +52,12 @@ var (
 // Popup items' metrics, in DIPs, after WinUI's MenuFlyoutItem: a highlight
 // inset from the menu's sides with rounded corners, the text past its
 // padding, and marks (checks, the submenus' chevrons) in a column of
-// their own.
+// their own. Kero's: rows as compact as its lists', not WinUI's 32.
 const (
-	menuItemHeight      = 32
+	menuItemHeight      = 26
 	menuSeparatorHeight = 9
 	menuInset           = 4  // the highlight from the menu's sides
-	menuPadding         = 12 // the text from the highlight's sides
+	menuPadding         = 10 // the text from the highlight's sides
 	menuRadius          = 4
 	menuMarkColumn      = 16 + 12 // a check, and the gap after it
 	menuAccelGap        = 32      // the least between a label and its shortcut
@@ -242,8 +242,9 @@ type nonClientMetrics struct {
 }
 
 // menuFace returns the fonts of popup items at dpi: the menu font of the
-// system, which follows the size of text of Accessibility, from its 12
-// pixels to WinUI's 14, in Segoe UI Variable where it is Segoe UI.
+// system, which follows the size of text of Accessibility, at its own
+// size (Kero's text's, where WinUI's grows it to 14 pixels), in Segoe UI
+// Variable where it is Segoe UI.
 func (b *Backend) menuFace(dpi int) menuFonts {
 	if f, ok := b.menuFonts[dpi]; ok {
 		return f
@@ -255,7 +256,6 @@ func (b *Backend) menuFace(dpi int) menuFonts {
 	if r, _, _ := procSystemParametersInfoForDpi.Call(spiGetNonClientMetrics, uintptr(ncm.Size), uintptr(unsafe.Pointer(&ncm)), 0, uintptr(dpi)); r != 0 {
 		lf = ncm.MenuFont
 	}
-	lf.Height = int32(math.Round(float64(lf.Height) * 14 / 12))
 	f := menuFonts{}
 	if string(utf16Decode(lf.FaceName[:])) == "Segoe UI" {
 		v := lf
