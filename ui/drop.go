@@ -23,6 +23,20 @@ func (e *node) FileDragOver() bool {
 	return e.c.rt.dropOver == e.id
 }
 
+// FileDragAt returns where files dragged from another app are, in the
+// element's local axes, and whether they are within its bounds, whichever
+// element there takes them: for showing what dropping them on it, or on
+// what it holds, would do, as by the part of it they are over.
+func (e *node) FileDragAt() (x, y float32, over bool) {
+	rt := e.c.rt
+	if !e.hasState() || !rt.fileDragging {
+		return 0, 0, false
+	}
+	s := e.st
+	x, y = s.local(rt.fileX, rt.fileY)
+	return x, y, rt.contains(s, Rect{s.x, s.y, s.w, s.h}, rt.fileX, rt.fileY)
+}
+
 // dropTarget returns the innermost element at (x, y) that takes files.
 func (rt *engine) dropTarget(x, y float32) *state {
 	for _, id := range rt.hitChain(x, y) {
@@ -37,10 +51,16 @@ func (rt *engine) dropTarget(x, y float32) *state {
 // negative coordinates, and reports whether an element takes them there.
 func (rt *engine) fileDrag(x, y float32) bool {
 	var over uint64
-	if x >= 0 && y >= 0 {
+	in := x >= 0 && y >= 0
+	if in {
 		if s := rt.dropTarget(x, y); s != nil {
 			over = s.id
 		}
+	}
+	// Where they are shows as they move (FileDragAt).
+	if in != rt.fileDragging || in && (x != rt.fileX || y != rt.fileY) {
+		rt.fileDragging, rt.fileX, rt.fileY = in, x, y
+		rt.requestFrame()
 	}
 	if over != rt.dropOver {
 		rt.dropOver = over
