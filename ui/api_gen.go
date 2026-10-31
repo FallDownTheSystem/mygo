@@ -3827,6 +3827,20 @@ func (_handle Element) Expanded(open bool) Element {
 	return wrapElement(_node.Expanded(open))
 }
 
+// FileDragAt returns where files dragged from another app are, in the
+// element's local axes, and whether they are within its bounds, whichever
+// element there takes them: for showing what dropping them on it, or on
+// what it holds, would do, as by the part of it they are over.
+func (_handle Element) FileDragAt() (float32, float32, bool) {
+	_node := _handle.node()
+	if _node == nil {
+		return 0, 0, false
+	}
+	_ctx := _node.c
+	_ = _ctx
+	return _node.FileDragAt()
+}
+
 // FileDragOver reports whether files dragged from another app are over
 // the element, which takes them if they are dropped, for showing it would.
 func (_handle Element) FileDragOver() bool {

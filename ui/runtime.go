@@ -404,13 +404,17 @@ type engine struct {
 	// dropOver is the element files are dragged over; access is true once
 	// assistive technology asked for the content, and accessNodes is how
 	// many nodes the last frame's tree had.
-	dropOver    uint64
-	access      bool
-	accessNodes int
-	blinkStart  time.Time
-	inFrame     bool
-	dark        bool
-	darkKnown   bool
+	dropOver uint64
+	// fileDragging is true while files from another app are dragged over
+	// the window, at fileX, fileY.
+	fileDragging bool
+	fileX, fileY float32
+	access       bool
+	accessNodes  int
+	blinkStart   time.Time
+	inFrame      bool
+	dark         bool
+	darkKnown    bool
 	// prefs are the desktop's preferences, read once until they change.
 	prefs      Preferences
 	prefsKnown bool
