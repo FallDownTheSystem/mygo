@@ -653,3 +653,28 @@ func TestFitContentDiffHorizontalScrollbar(t *testing.T) {
 		}
 	}
 }
+
+// A patch's hunk deep in its file numbers its lines as the file does: the
+// gutter has room for those numbers, five digits here, two more than a
+// hunk at the file's top, not its few lines' own.
+func TestPatchGutterFitsFileLines(t *testing.T) {
+	gutter := func(layout DiffLayout, at string) (float32, float32) {
+		files, err := ParsePatch("--- a/x\n+++ b/x\n@@ -" + at + ",3 +" + at + ",3 @@\n a\n-b\n+B\n c\n")
+		if err != nil {
+			t.Fatal(err)
+		}
+		d := &DiffState{Layout: layout}
+		d.SetPatch(files[0])
+		tt := ui.NewTester(func(c *ui.Context) { DiffView(c, d).Fill() }, 800, 600)
+		tt.Frame()
+		ed := d.editorOf(DiffNew)
+		return ed.gutterW, ed.view.charWidth
+	}
+	for _, layout := range []DiffLayout{DiffSplit, DiffUnified} {
+		top, _ := gutter(layout, "1")
+		deep, cw := gutter(layout, "12345")
+		if deep-top < 2*cw-0.5 {
+			t.Errorf("%v: gutter %v wide at line 12345, %v at line 1", layout, deep, top)
+		}
+	}
+}
