@@ -634,8 +634,13 @@ func (d *DiffState) editorOf(side DiffSide) *editor {
 
 // sideOptions are the options of the editor of the old side, or the new.
 func (d *DiffState) sideOptions(old bool) options {
-	// Both gutters as wide, so that both sides wrap alike.
-	digits := max(3, len(strconv.Itoa(max(d.Old.LineCount(), d.New.LineCount()))))
+	// Both gutters as wide, so that both sides wrap alike; a partial
+	// patch's as its lines' numbers in the file, past its texts' own.
+	last := max(d.Old.LineCount(), d.New.LineCount())
+	if pt := d.partial; pt != nil {
+		last = max(pt.fileLine(true, d.Old.LineCount()-1), pt.fileLine(false, d.New.LineCount()-1)) + 1
+	}
+	digits := max(3, len(strconv.Itoa(last)))
 	o := options{
 		readOnly: old || !d.Editable, font: d.Font, lineHeight: d.LineHeight, tabSize: d.TabSize,
 		wrap: d.Wrap, lineNumbers: LineNumbersOn, whitespace: WhitespaceNone, autoClose: true,
