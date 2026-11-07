@@ -793,6 +793,44 @@ func TestMenus(t *testing.T) {
 	}
 }
 
+// Options.ContextMenu adds the app's items after the terminal's, given
+// the text selected.
+func TestContextMenuItems(t *testing.T) {
+	loadLib(t)
+	var got []string
+	term, err := New(Options{Conn: newPipe(), ContextMenu: func(m *ui.Menu, selection string) {
+		if m.Item("Send").Disabled(selection == "").Chosen() {
+			got = append(got, selection)
+		}
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer term.Close()
+	term.Feed([]byte("hello world"))
+	tt := ui.NewTester(func(c *ui.Context) { View(c, term).Fill().AutoFocus() }, 400, 200)
+	x0, y0 := cellCenter(term, 0, 0)
+	x1, y1 := cellCenter(term, 4, 0)
+	// Nothing selected, the item is there, disabled.
+	tt.RightClickAt(x1, y1)
+	if menu := strings.Join(tt.Menu(), ","); !strings.HasSuffix(menu, ",-,Clear,-,Send") {
+		t.Errorf("context menu = %q", menu)
+	}
+	if err := tt.ChooseMenuItem("Send"); err == nil && len(got) > 0 {
+		t.Errorf("chose a disabled item, with %q", got)
+	}
+	tt.Press(x0-2, y0)
+	tt.Move(x1+2, y1)
+	tt.Release(x1+2, y1)
+	tt.RightClickAt(x1, y1)
+	if err := tt.ChooseMenuItem("Send"); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0] != "hello" {
+		t.Errorf("chosen with %q", got)
+	}
+}
+
 func TestCopyOnSelect(t *testing.T) {
 	loadLib(t)
 	for _, on := range []CopyOnSelect{CopyOnSelectNone, CopyOnSelectClipboard} {
