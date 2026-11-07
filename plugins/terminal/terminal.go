@@ -260,6 +260,11 @@ type Options struct {
 	// uploads the files for a remote program, then pastes their paths
 	// there with Paste.
 	OnDrop func(paths []string) bool
+	// ContextMenu adds items of the app's own to the view's context menu,
+	// after its Copy, Paste, Select All and Clear, as Send to an agent of
+	// the text selected: selection is the text selected, "" for none. It
+	// runs on the main thread as the menu is built.
+	ContextMenu func(m *ui.Menu, selection string)
 	// OnKey sees a key press before Keybinds and before the terminal
 	// encodes it, on the main thread, and reports whether it took the key;
 	// a key taken sends nothing, neither the text it types nor its
