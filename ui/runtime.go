@@ -404,6 +404,9 @@ type engine struct {
 	// windowFocus reads; focusRead, that the last frame read it, so that a
 	// change of it draws a frame.
 	windowFocused, focusRead bool
+	// heldRead tells that the last frame read whether a press goes on
+	// (PointerHeld), so that the press ending draws a frame.
+	heldRead bool
 	// activeRead tells that the last frame read whether the window is
 	// drawn as active (windowActive), so that a change of it draws a
 	// frame.
@@ -701,7 +704,7 @@ func (rt *engine) runFrame() {
 	rt.buildAsked, rt.lookDue, rt.viewMoved = false, false, false
 	rt.frame++
 	rt.input = false
-	rt.focusRead, rt.activeRead, rt.withinRead, rt.keysRead = false, false, false, false
+	rt.focusRead, rt.activeRead, rt.withinRead, rt.keysRead, rt.heldRead = false, false, false, false, false
 	rt.stats.begin(rt)
 	now := rt.frameTime()
 	rt.zoomChanged = false

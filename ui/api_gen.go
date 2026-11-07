@@ -503,6 +503,19 @@ func (_handle *Context) OpenURLThen(url string, done func(err error)) {
 	_ctx.OpenURLThen(url, done)
 }
 
+// PointerHeld reports whether a press of the content goes on: a button
+// went down on one of its elements and is not let go yet. The frame builds
+// again as it ends. What moves the keyboard to a native view, as a web
+// view's page, waits for it: the content losing the keyboard ends the
+// press, as a drag of a divider.
+func (_handle *Context) PointerHeld() bool {
+	_ctx := _handle.build()
+	if _ctx == nil {
+		return false
+	}
+	return _ctx.PointerHeld()
+}
+
 // Preferences returns the settings of the desktop that controls follow.
 // A frame follows their changes.
 func (_handle *Context) Preferences() Preferences {
