@@ -576,6 +576,13 @@ func (v *view) menu(m *ui.Menu) {
 	if v.menuItem(m, tx.ClearTerminal(), ActionClearScreen).Disabled(alt).Chosen() {
 		v.clearScreen()
 	}
+	if add := t.opts.ContextMenu; add != nil {
+		if !selected {
+			text = ""
+		}
+		m.Separator()
+		add(m, text)
+	}
 }
 
 // menuItem adds an item of the menu, showing the key bound to its action.
