@@ -431,6 +431,41 @@ func TestDiffFitContentBuildsSeparatorsScrolledTo(t *testing.T) {
 	}
 }
 
+// A diff that fits its content builds an annotation far from what it
+// shows, which brings itself into view, as a comment jumped to does.
+func TestDiffFitContentBuildsAnnotationsOutOfView(t *testing.T) {
+	var lines []string
+	for i := range 300 {
+		lines = append(lines, "line "+strconv.Itoa(i))
+	}
+	old := strings.Join(lines, "\n") + "\n"
+	for i := range lines {
+		lines[i] += " changed"
+	}
+	nw := strings.Join(lines, "\n") + "\n"
+	for _, layout := range []DiffLayout{DiffUnified, DiffSplit} {
+		// Every line changed: in a unified diff, the new lines come after
+		// the 300 deleted, far below the window.
+		d := &DiffState{Old: NewBuffer(old), New: NewBuffer(nw), Layout: layout, FitContent: true,
+			Annotations: []DiffAnnotation{{Side: DiffNew, Line: 250, Height: 40}}}
+		d.RenderAnnotation = func(c *ui.Context, a DiffAnnotation) {
+			ui.Column(c).Fill().Children(func() {
+				ui.Text(c, "the note")
+				ui.Box(c).Width(1).Height(1).ScrollIntoView()
+			})
+		}
+		tt := ui.NewTester(func(c *ui.Context) {
+			ui.Scroll(c).Fill().Children(func() { DiffView(c, d).FillWidth() })
+		}, 800, 600)
+		for range 10 {
+			tt.Frame()
+		}
+		if r, ok := tt.Find("the note"); !ok || r.Y < 0 || r.Y+r.H > 600 {
+			t.Errorf("layout %v: the note at %v (found %v), not in view", layout, r, ok)
+		}
+	}
+}
+
 // A long diff that fits its content measures the wraps of the lines it
 // shows, not of those it folds away, which it measures once they show:
 // a window resized through widths would else measure every line at each.

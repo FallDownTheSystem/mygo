@@ -358,8 +358,16 @@ func (s *diffSide) buildBlocks(c *ui.Context, ed *editor) {
 	if s.old {
 		side = DiffOld
 	}
-	// Annotations under their lines, after one another on a line.
+	// Annotations under their lines, after one another on a line. A diff
+	// as high as its content builds them wherever they are: they are few,
+	// and an app brings one into view by what it builds in it
+	// (ScrollIntoView), which it could not while the diff built only those
+	// near what it showed.
 	if d.RenderAnnotation != nil && len(d.Annotations) > 0 {
+		first, last := first, last
+		if ed.o.fitContent {
+			first, last = 0, h.n-1
+		}
 		stacked := map[[2]int]float64{} // by where they go: 0 a line, 1 a deleted line
 		for _, a := range d.Annotations {
 			var top float64
