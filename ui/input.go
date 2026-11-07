@@ -27,6 +27,13 @@ func (rt *engine) event(ev platform.SurfaceEvent) (taken bool) {
 		// Input, which the next frame builds even out of sight.
 		rt.input = true
 	}
+	if rt.pressed != nil {
+		defer func() {
+			if rt.pressed == nil && rt.heldRead {
+				rt.requestFrame()
+			}
+		}()
+	}
 	// The window's DIPs, zoomed, are the content's.
 	rt.fromWindow(&ev)
 	x, y := float32(ev.X), float32(ev.Y)
@@ -2030,6 +2037,16 @@ func (rt *engine) modsChanged(mods Modifiers) {
 // or modifier event said: a view showing each row's shortcut while Cmd is
 // held reads it, and draws again as it changes.
 func (c *context) Modifiers() Modifiers { return c.rt.mods }
+
+// PointerHeld reports whether a press of the content goes on: a button
+// went down on one of its elements and is not let go yet. The frame builds
+// again as it ends. What moves the keyboard to a native view, as a web
+// view's page, waits for it: the content losing the keyboard ends the
+// press, as a drag of a divider.
+func (c *context) PointerHeld() bool {
+	c.rt.heldRead = true
+	return c.rt.pressed != nil
+}
 
 // heldKey is a key held in the window: the key as shortcuts take it, and
 // its position, KeyUnknown where the platform tells none.
