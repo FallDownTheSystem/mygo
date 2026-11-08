@@ -34,6 +34,9 @@ type Backend struct {
 	// of the WebView2 environment, once made.
 	languages []string
 	appMenu   *platform.Menu
+	// browserArgs are the app's own arguments of WebView2's browser
+	// (AppOptions.BrowserArguments).
+	browserArgs string
 
 	// The WebView2 environment is created asynchronously, when the first
 	// window that shows a web page needs it; windows wait.
@@ -144,6 +147,7 @@ func (b *Backend) IsMainThread() bool { return currentThreadID() == mainThreadID
 func (b *Backend) Init(h platform.AppHandler, opts platform.AppOptions) error {
 	b.h = h
 	b.name = opts.Name
+	b.browserArgs = opts.BrowserArguments
 	theBackend = b
 	procCoInitializeEx.Call(0, coinitApartmentThreaded)
 	if has(procSetProcessDpiAwarenessContext) {
