@@ -733,6 +733,18 @@ type Page interface {
 	CapturePage(cb func(png []byte, err error))
 	// PrintToPDF renders the page as a PDF document.
 	PrintToPDF(opts PDFOptions, cb func(pdf []byte, err error))
+	// CallDevToolsMethod calls a method of the Chrome DevTools Protocol on
+	// the page, params a JSON object, and tells cb the JSON of its result.
+	// cb runs on the main thread exactly once, maybe before
+	// CallDevToolsMethod returns; with ErrUnsupported where the engine
+	// speaks no such protocol.
+	CallDevToolsMethod(method, params string, cb func(result string, err error))
+	// ListenDevToolsEvent has fn receive the JSON of the parameters of
+	// each event of the DevTools Protocol named event, on the main
+	// thread, from then on, in place of the one before; a nil fn stops.
+	// A backend whose web view does not exist yet listens once it does.
+	// It returns ErrUnsupported where the engine speaks no such protocol.
+	ListenDevToolsEvent(event string, fn func(params string)) error
 	// DroppedFiles returns the paths of the files of the latest drop on
 	// the page and forgets them. The page reports the drop itself (a
 	// "drop" message); backends record the paths before the page sees it.

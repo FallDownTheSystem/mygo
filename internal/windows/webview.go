@@ -862,7 +862,8 @@ func (w *window) devtools(method, params string, done func(string, error)) {
 			return
 		}
 		if failed(hr) {
-			cb("", hresultError(method, hr))
+			// A method the protocol fails answers its error as JSON.
+			cb(wstr(result), hresultError(method, hr))
 			return
 		}
 		cb(wstr(result), nil)
@@ -875,6 +876,63 @@ func (w *window) devtools(method, params string, done func(string, error)) {
 			cb("", hresultError(method, hr))
 		}
 	}
+}
+
+// CallDevToolsMethod calls a DevTools protocol method for the app. A
+// method that fails answers its error as JSON, whose message tells why.
+func (w *window) CallDevToolsMethod(method, params string, cb func(string, error)) {
+	if params == "" {
+		params = "{}"
+	}
+	w.withWebViewOr(func() {
+		w.devtools(method, params, func(res string, err error) {
+			if err != nil {
+				var e struct {
+					Message string `json:"message"`
+				}
+				if json.Unmarshal([]byte(res), &e) == nil && e.Message != "" {
+					err = fmt.Errorf("mygo: %s: %s", method, e.Message)
+				}
+			}
+			cb(res, err)
+		})
+	}, func(err error) { cb("", err) })
+}
+
+// ListenDevToolsEvent sets the listener of a DevTools protocol event. The
+// event's receiver is asked for once, with the first listener, and kept:
+// WebView2 delivers its events until the web view closes.
+func (w *window) ListenDevToolsEvent(event string, fn func(string)) error {
+	if w.devEvents == nil {
+		w.devEvents = map[string]func(string){}
+	}
+	_, had := w.devEvents[event]
+	w.devEvents[event] = fn
+	if had || fn == nil {
+		return nil
+	}
+	w.withWebView(func() {
+		var recv uintptr
+		if failed(comCall(w.webview, wvGetDevToolsProtocolEventReceiver, uintptr(unsafe.Pointer(u16(event))), uintptr(unsafe.Pointer(&recv)))) || recv == 0 {
+			return
+		}
+		defer release(recv)
+		var tok int64
+		withHandler(func(_, args uintptr) {
+			fn := w.devEvents[event]
+			if fn == nil {
+				return
+			}
+			var p uintptr
+			if failed(comCall(args, cdpEventArgsGetParameterObjectAsJSON, uintptr(unsafe.Pointer(&p)))) {
+				return
+			}
+			fn(takeWstr(p))
+		}, func(h uintptr) uintptr {
+			return comCall(recv, cdpReceiverAddEventReceived, h, uintptr(unsafe.Pointer(&tok)))
+		})
+	})
+	return nil
 }
 
 func (w *window) SetZoom(f float64) {

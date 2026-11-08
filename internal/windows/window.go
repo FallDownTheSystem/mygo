@@ -135,6 +135,10 @@ type window struct {
 	htmlNext     bool              // LoadHTML started the next navigation
 	calls        map[int]func(string, error)
 	nextCall     int
+	// devEvents are the listeners of DevTools Protocol events
+	// (ListenDevToolsEvent), by event: an event's receiver, once it has
+	// one, calls whichever is there, and nothing once it is nil.
+	devEvents map[string]func(string)
 
 	// flyoutLeft tells that the activation left the window's focusable
 	// flyout for another app's window, which draws the window inactive

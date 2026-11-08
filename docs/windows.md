@@ -1231,6 +1231,34 @@ adopts. There:
 of a page control its inspector, when it has one, see
 [the web inspector](frontend.md#the-web-inspector).
 
+### The DevTools Protocol
+
+On Windows, a page speaks the
+[Chrome DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/),
+the inspector enabled or not, for what the web's APIs don't reach: its
+console and network as they happen, a phone's viewport, a slow network.
+`CallDevTools` calls a method and returns the JSON of its result, and
+`OnDevToolsEvent` hears an event, once its domain is enabled:
+
+```go
+page := win.Page()
+off, err := page.OnDevToolsEvent("Runtime.exceptionThrown", func(params []byte) {
+	log.Printf("the page threw: %s", params)
+})
+if errors.Is(err, errors.ErrUnsupported) {
+	return // macOS and Linux: WebKit speaks no such protocol
+}
+defer off()
+_, err = page.CallDevTools(ctx, "Runtime.enable", nil)
+_, err = page.CallDevTools(ctx, "Emulation.setDeviceMetricsOverride", map[string]any{
+	"width": 390, "height": 844, "deviceScaleFactor": 3, "mobile": true,
+})
+```
+
+Listeners run on the main thread, as other events do. What a method
+changes, and the domains enabled, last as the page navigates, for the
+life of its window or web view.
+
 ### The page's process
 
 `ProcessID` returns the ID of the operating system's process that runs a
