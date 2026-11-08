@@ -4232,7 +4232,8 @@ func (_handle Element) Capitalize(c Capitalization) Element {
 
 // CaretColor sets the color of the insertion caret of the text inputs in
 // the element, as CSS's caret-color does, a field's own text color for
-// one; the theme's accent is the color elsewhere.
+// one; the theme's line accent (Theme.LineAccentColor) is the color
+// elsewhere.
 func (_handle Element) CaretColor(c Color) Element {
 	_node := _handle.node()
 	if _node == nil {
