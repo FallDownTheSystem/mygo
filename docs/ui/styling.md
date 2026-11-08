@@ -264,6 +264,16 @@ t.ScrollbarStyle = ui.ScrollbarStyle{
 c.SetTheme(&t)
 ```
 
+`Accent` fills faces: primary buttons, checked controls, highlighted
+rows. Lines and text take `LineAccent`: the caret of text inputs and the
+code editor, links, and the border of a focused input. Left zero, it is
+`Accent`; set it apart when the accent that fills well is too faint or too
+strong as a thin line:
+
+```go
+t.Accent, t.LineAccent = ui.Hex("#dbeafe"), ui.Hex("#2563eb")
+```
+
 `Spacing` is the unit of the room widgets leave: their paddings and gaps,
 and the sizes of check boxes, switches, sliders and the rows of tables and
 trees, are multiples of it. It is 4 by default; 3 makes every widget

@@ -406,14 +406,14 @@ func joinDescription(a, b string) string {
 }
 
 // inputBorder is the border of the box of a text input: the theme's
-// Danger while the input is not valid, its Accent while it has the focus,
-// darker while the pointer is over the box.
+// Danger while the input is not valid, its line accent while it has the
+// focus, darker while the pointer is over the box.
 func inputBorder(t *Theme, box, in *node) {
 	switch {
 	case in.invalid:
 		box.borderC = t.Danger
 	case in.Focused():
-		box.borderC = t.Accent
+		box.borderC = t.LineAccentColor()
 	case box.Hovered():
 		box.borderC = t.Border.Mix(t.Text, 0.25)
 	}

@@ -93,8 +93,8 @@ func defaultTheme(t *ui.Theme) Theme {
 	th := Theme{
 		Text:                t.Text,
 		Muted:               t.TextMuted,
-		Link:                t.Accent,
-		Caret:               t.Accent,
+		Link:                t.LineAccentColor(),
+		Caret:               t.LineAccentColor(),
 		Selection:           t.Selection,
 		CodeFont:            "monospace",
 		CodeSize:            0.92,
