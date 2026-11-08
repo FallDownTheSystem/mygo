@@ -93,7 +93,7 @@ func coreEditableText(c *context, value *string) *node {
 		// Where the text was, within its padding and border.
 		pad := t.Space(0.5)
 		in = coreTextInputBase(c, &st.draft).Grow(1).MinWidth(t.Space(10)).Padding(pad, pad*2).
-			Margin(-pad-1, -pad*2-1).Radius(t.Space(1)).Background(t.Background).Border(1, t.Accent).
+			Margin(-pad-1, -pad*2-1).Radius(t.Space(1)).Background(t.Background).Border(1, t.LineAccentColor()).
 			TextColor(t.Text)
 	})
 	box.afterInput(func() {
