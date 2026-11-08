@@ -191,6 +191,9 @@ type AppOptions struct {
 	// executable that is no bundle is brought there as it starts; the
 	// core shows the windows without the focus everywhere.
 	Background bool
+	// BrowserArguments are further arguments of WebView2's browser.
+	// Only meaningful on Windows.
+	BrowserArguments string
 }
 
 // AppHandler receives application level events from the backend.

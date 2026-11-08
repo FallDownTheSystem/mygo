@@ -207,14 +207,17 @@ const autoplayArguments = "--autoplay-policy=no-user-gesture-required"
 
 // browserArguments are the browser's additional arguments for a first page
 // that asks not to be throttled, or to play without a user gesture, or
-// both; "" for neither.
-func browserArguments(unthrottled, autoplay bool) string {
+// both, followed by the app's own (App.SetBrowserArguments); "" for none.
+func browserArguments(unthrottled, autoplay bool, app string) string {
 	var args []string
 	if unthrottled {
 		args = append(args, unthrottledArguments)
 	}
 	if autoplay {
 		args = append(args, autoplayArguments)
+	}
+	if app != "" {
+		args = append(args, app)
 	}
 	return strings.Join(args, " ")
 }
