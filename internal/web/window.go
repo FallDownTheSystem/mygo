@@ -249,6 +249,12 @@ func (w *window) CallAsyncFunction(_ string, cb func(string, error)) {
 	cb("", errUnsupported)
 }
 
+// Browsers give a page no DevTools Protocol.
+func (w *window) CallDevToolsMethod(_, _ string, cb func(string, error)) {
+	cb("", platform.ErrUnsupported)
+}
+func (w *window) ListenDevToolsEvent(string, func(string)) error { return platform.ErrUnsupported }
+
 func (w *window) CaptureState(platform.CaptureKind) platform.CaptureState {
 	return platform.CaptureNone
 }

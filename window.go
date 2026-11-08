@@ -459,6 +459,11 @@ type Window struct {
 	audible          bool
 	onAudibleChanged listeners[func(bool)]
 
+	// devEvents are the listeners of the DevTools Protocol's events
+	// (Page.OnDevToolsEvent), by event, while the backend tells it. Main
+	// thread only.
+	devEvents map[string]*listeners[func([]byte)]
+
 	// contextTarget is what the bridge recorded of the page's latest
 	// contextmenu event, until a context menu opens; shownContextMenu
 	// the menu shown last, whose items' Click is found by their weak IDs

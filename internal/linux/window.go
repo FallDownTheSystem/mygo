@@ -2113,3 +2113,9 @@ func mainFrameNavigation(action ptr, uri string) bool {
 	}
 	return uri != "about:srcdoc"
 }
+
+// WebKitGTK speaks no Chrome DevTools Protocol.
+func (w *window) CallDevToolsMethod(_, _ string, cb func(string, error)) {
+	cb("", platform.ErrUnsupported)
+}
+func (w *window) ListenDevToolsEvent(string, func(string)) error { return platform.ErrUnsupported }

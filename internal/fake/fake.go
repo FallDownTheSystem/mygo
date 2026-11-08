@@ -592,6 +592,14 @@ type Window struct {
 	// OnEval, when set, receives the scripts passed to Eval instead of
 	// recording them.
 	OnEval func(js string)
+	// DevToolsMethod answers CallDevToolsMethod, which answers "{}"
+	// without it; NoDevTools makes the page speak no DevTools Protocol, as
+	// WebKit's. DevToolsCalls are the methods called, in order.
+	DevToolsMethod func(method, params string) (string, error)
+	NoDevTools     bool
+	DevToolsCalls  []DevToolsCall
+	// devEvents are ListenDevToolsEvent's listeners, by event.
+	devEvents map[string]func(string)
 
 	surface *Surface
 }
@@ -662,6 +670,64 @@ func (w *Window) PrintToPDF(o platform.PDFOptions, cb func([]byte, error)) {
 	w.PDF = o
 	w.mu.Unlock()
 	cb([]byte("%PDF-1.4 fake"), nil)
+}
+
+// DevToolsCall is a call of CallDevToolsMethod.
+type DevToolsCall struct{ Method, Params string }
+
+func (w *Window) CallDevToolsMethod(method, params string, cb func(string, error)) {
+	w.mu.Lock()
+	if w.NoDevTools {
+		w.mu.Unlock()
+		cb("", platform.ErrUnsupported)
+		return
+	}
+	w.DevToolsCalls = append(w.DevToolsCalls, DevToolsCall{method, params})
+	answer := w.DevToolsMethod
+	w.mu.Unlock()
+	if answer == nil {
+		cb("{}", nil)
+		return
+	}
+	cb(answer(method, params))
+}
+
+func (w *Window) ListenDevToolsEvent(event string, fn func(string)) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.NoDevTools {
+		return platform.ErrUnsupported
+	}
+	if w.devEvents == nil {
+		w.devEvents = map[string]func(string){}
+	}
+	if fn == nil {
+		delete(w.devEvents, event)
+	} else {
+		w.devEvents[event] = fn
+	}
+	return nil
+}
+
+// DevToolsListening tells whether the page listens to a DevTools
+// Protocol event.
+func (w *Window) DevToolsListening(event string) bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.devEvents[event] != nil
+}
+
+// EmitDevToolsEvent has the page raise a DevTools Protocol event, as
+// the engine does on the main thread, and reports whether one listened.
+func (w *Window) EmitDevToolsEvent(event, params string) bool {
+	w.mu.Lock()
+	fn := w.devEvents[event]
+	w.mu.Unlock()
+	if fn == nil {
+		return false
+	}
+	fn(params)
+	return true
 }
 
 func (w *Window) DroppedFiles() []string {
