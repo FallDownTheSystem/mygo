@@ -432,3 +432,9 @@ func (w *window) CapturePage(cb func([]byte, error)) {
 func (w *window) PrintToPDF(_ platform.PDFOptions, cb func([]byte, error)) {
 	cb(nil, platform.ErrUnsupported)
 }
+
+// A phone's web view gives its app no Chrome DevTools Protocol.
+func (w *window) CallDevToolsMethod(_, _ string, cb func(string, error)) {
+	cb("", platform.ErrUnsupported)
+}
+func (w *window) ListenDevToolsEvent(string, func(string)) error { return platform.ErrUnsupported }

@@ -327,6 +327,12 @@ func (n *webViewNative) CapturePage(cb func([]byte, error)) {
 func (n *webViewNative) PrintToPDF(opts platform.PDFOptions, cb func([]byte, error)) {
 	n.web.PrintToPDF(opts, cb)
 }
+func (n *webViewNative) CallDevToolsMethod(method, params string, cb func(string, error)) {
+	n.web.CallDevToolsMethod(method, params, cb)
+}
+func (n *webViewNative) ListenDevToolsEvent(event string, fn func(string)) error {
+	return n.web.ListenDevToolsEvent(event, fn)
+}
 func (n *webViewNative) CaptureState(kind platform.CaptureKind) platform.CaptureState {
 	return n.web.CaptureState(kind)
 }
