@@ -36,6 +36,9 @@ type Backend struct {
 	// of the WebView2 environment, once made.
 	languages []string
 	appMenu   *platform.Menu
+	// browserArgs are the app's own arguments of WebView2's browser
+	// (AppOptions.BrowserArguments).
+	browserArgs string
 
 	// The WebView2 environment is created asynchronously, when the first
 	// window that shows a web page needs it; windows wait.
@@ -145,6 +148,7 @@ func (b *Backend) IsMainThread() bool { return currentThreadID() == mainThreadID
 func (b *Backend) Init(h platform.AppHandler, opts platform.AppOptions) error {
 	b.h = h
 	b.name = opts.Name
+	b.browserArgs = opts.BrowserArguments
 	theBackend = b
 	procCoInitializeEx.Call(0, coinitApartmentThreaded)
 	if has(procSetProcessDpiAwarenessContext) {
@@ -174,9 +178,9 @@ func (b *Backend) Init(h platform.AppHandler, opts platform.AppOptions) error {
 //
 // The environment's browser runs with unthrottledArguments when that first
 // page asked not to be throttled, and with autoplayArguments when it asked
-// to play without a user gesture: the arguments are the browser's, which
-// all the app's pages share, and a page that asks once it runs is too
-// late, which the log tells.
+// to play without a user gesture, and with the app's own browserArgs: the
+// arguments are the browser's, which all the app's pages share, and a page
+// that asks once it runs is too late, which the log tells.
 func (b *Backend) startEnvironment(o *platform.WindowOptions) error {
 	unthrottled := o != nil && o.NoBackgroundThrottling
 	autoplay := o != nil && o.Autoplay
@@ -204,7 +208,7 @@ func (b *Backend) startEnvironment(o *platform.WindowOptions) error {
 	// What the first page asked for counts from now, so that a page shown
 	// while the environment is being made isn't told it is too late.
 	b.envUnthrottled, b.envAutoplay = unthrottled, autoplay
-	err := createEnvironment(userData, language, browserArguments(unthrottled, autoplay), func(env uintptr, withArgs bool, err error) {
+	err := createEnvironment(userData, language, browserArguments(unthrottled, autoplay, b.browserArgs), func(env uintptr, withArgs bool, err error) {
 		b.env, b.envErr = env, err
 		if err != nil || !withArgs {
 			b.envUnthrottled, b.envAutoplay = false, false

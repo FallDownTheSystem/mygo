@@ -106,19 +106,23 @@ func TestChromiumLanguage(t *testing.T) {
 }
 
 // TestBrowserArguments checks the arguments WebView2's browser is given for
-// the options of the first page: none for neither, and both sets for both.
+// the options of the first page and the app's own: none for none, and the
+// app's after the pages'.
 func TestBrowserArguments(t *testing.T) {
+	const port = "--remote-debugging-port=9222"
 	for _, tt := range []struct {
 		unthrottled, autoplay bool
-		want                  string
+		app, want             string
 	}{
-		{false, false, ""},
-		{true, false, unthrottledArguments},
-		{false, true, "--autoplay-policy=no-user-gesture-required"},
-		{true, true, unthrottledArguments + " --autoplay-policy=no-user-gesture-required"},
+		{false, false, "", ""},
+		{true, false, "", unthrottledArguments},
+		{false, true, "", "--autoplay-policy=no-user-gesture-required"},
+		{true, true, "", unthrottledArguments + " --autoplay-policy=no-user-gesture-required"},
+		{false, false, port, port},
+		{false, true, port, "--autoplay-policy=no-user-gesture-required " + port},
 	} {
-		if got := browserArguments(tt.unthrottled, tt.autoplay); got != tt.want {
-			t.Errorf("browserArguments(%v, %v) = %q, want %q", tt.unthrottled, tt.autoplay, got, tt.want)
+		if got := browserArguments(tt.unthrottled, tt.autoplay, tt.app); got != tt.want {
+			t.Errorf("browserArguments(%v, %v, %q) = %q, want %q", tt.unthrottled, tt.autoplay, tt.app, got, tt.want)
 		}
 	}
 }

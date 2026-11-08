@@ -174,6 +174,9 @@ type AppOptions struct {
 	// DMABUFRenderer is "off" (or ""), "on" or "auto": whether WebKitGTK
 	// may draw with its DMA-BUF renderer. Only meaningful on Linux.
 	DMABUFRenderer string
+	// BrowserArguments are further arguments of WebView2's browser.
+	// Only meaningful on Windows.
+	BrowserArguments string
 }
 
 // AppHandler receives application level events from the backend.

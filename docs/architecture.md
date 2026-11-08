@@ -573,6 +573,8 @@ features GTK 4 lacks become X11-only code beside it.
   User data lives in `%LOCALAPPDATA%\<name>\WebView2`. The direct path applies
   `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` and `WEBVIEW2_USER_DATA_FOLDER` as
   the loader does; it does not read the channel variables or policy keys.
+  `App.SetBrowserArguments` adds to the environment options' arguments, after
+  the first page's (throttling, autoplay) and before the variable's.
 - **Custom schemes** load from `http://<scheme>.localhost/`, and their
   other hosts from `http://<host>.<scheme>.localhost/` (`internal/schemehost`:
   hosts of DNS labels, lower-cased, without a port), which WebView2

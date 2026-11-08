@@ -587,7 +587,11 @@ On Windows, an app takes `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` and
 another process can drive its pages over the DevTools protocol, as a test
 runner, Playwright's `connectOverCDP` or an agent does. This works in every
 build, as with Microsoft's loader: whoever starts the app sets its
-environment.
+environment. An app that opens the port itself, as a setting of its own,
+calls `mygo.App.SetBrowserArguments("--remote-debugging-port=9222")` before
+`App.Run`: every page of the app runs in the one browser, which starts with
+the first page, so the arguments are the app's, not a page's, and the
+variable's come after them. Other systems ignore it.
 
 On Windows, WebView2's own keys come with the inspector: F5 and Ctrl+R reload
 the page (a reload [`OnWillNavigate`](windows.md#pages) is not asked about),

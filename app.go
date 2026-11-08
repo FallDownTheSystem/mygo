@@ -53,6 +53,7 @@ type Application struct {
 	version   string
 	policy    ActivationPolicy
 	dmabuf    DMABUFRenderer
+	browser   string // SetBrowserArguments'
 	running   bool
 	ready     bool
 	readyCh   chan struct{}
@@ -126,6 +127,7 @@ func (a *Application) Run() error {
 		Name:             a.Name(),
 		ActivationPolicy: string(a.ActivationPolicy()),
 		DMABUFRenderer:   string(a.dmabuf),
+		BrowserArguments: a.browser,
 	}); err != nil {
 		return err
 	}
@@ -445,6 +447,19 @@ func (a *Application) SetDMABUFRenderer(r DMABUFRenderer) {
 	}
 	a.mu.Lock()
 	a.dmabuf = r
+	a.mu.Unlock()
+}
+
+// SetBrowserArguments gives WebView2's browser on Windows further
+// command-line arguments, as --remote-debugging-port=9222, which opens a
+// port that Playwright's connectOverCDP and other DevTools clients drive
+// the app's pages through. Every page of the app runs in that one
+// browser, which starts with the first page shown: call it before Run.
+// WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS, set by the user, come after
+// them. Other systems ignore it.
+func (a *Application) SetBrowserArguments(args string) {
+	a.mu.Lock()
+	a.browser = strings.TrimSpace(args)
 	a.mu.Unlock()
 }
 
