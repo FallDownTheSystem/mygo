@@ -1652,7 +1652,8 @@ func (ts *textStyle) selectionColor(t *Theme) Color {
 
 // CaretColor sets the color of the insertion caret of the text inputs in
 // the element, as CSS's caret-color does, a field's own text color for
-// one; the theme's accent is the color elsewhere.
+// one; the theme's line accent (Theme.LineAccentColor) is the color
+// elsewhere.
 func (e *node) CaretColor(c Color) *node {
 	e.ts.caret = c
 	e.ts.set |= setCaret
@@ -1664,7 +1665,7 @@ func (ts *textStyle) caretColor(t *Theme) Color {
 	if ts.set&setCaret != 0 {
 		return ts.caret
 	}
-	return t.Accent
+	return t.LineAccentColor()
 }
 
 // LineHeight sets the height of lines of text as a multiple of the font

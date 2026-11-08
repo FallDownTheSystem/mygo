@@ -192,7 +192,7 @@ func styleButton(c *context, b *node, primary bool) {
 // label and Children to style parts of its text.
 func coreLink(c *context, label, url string) *node {
 	t := c.theme
-	e := coreText(c, label).TextColor(t.Accent).Cursor(CursorPointer).Focusable()
+	e := coreText(c, label).TextColor(t.LineAccentColor()).Cursor(CursorPointer).Focusable()
 	e.widget, e.role = "Link", RoleLink
 	router := c.router
 	e.afterInput(func() {

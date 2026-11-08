@@ -5,22 +5,25 @@ import (
 	"testing"
 )
 
+// countColor counts the pixels of tt's image that are want.
+func countColor(tt *Tester, want color.RGBA) int {
+	img, n := tt.Image(), 0
+	for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+		for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
+			if img.RGBAAt(x, y) == want {
+				n++
+			}
+		}
+	}
+	return n
+}
+
 // TestCaretColor checks that the caret of a focused text input is the
 // color CaretColor sets on it or on an element around it, and the theme's
 // accent without.
 func TestCaretColor(t *testing.T) {
 	magenta := RGB(255, 0, 255)
-	count := func(tt *Tester, want color.RGBA) int {
-		img, n := tt.Image(), 0
-		for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
-			for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
-				if img.RGBAAt(x, y) == want {
-					n++
-				}
-			}
-		}
-		return n
-	}
+	count := countColor
 	for name, build := range map[string]func(c *context, s *string){
 		"on the input": func(c *context, s *string) { coreTextInput(c, s).Width(100).AutoFocus().CaretColor(magenta) },
 		"inherited": func(c *context, s *string) {
@@ -40,5 +43,31 @@ func TestCaretColor(t *testing.T) {
 	tt := coreNewTester(func(c *context) { coreTextInput(c, &s).Width(100).AutoFocus() }, 200, 100)
 	if n := count(tt, color.RGBA{255, 0, 255, 255}); n != 0 {
 		t.Errorf("without CaretColor: %d pixels of magenta", n)
+	}
+}
+
+// TestLineAccent checks that a focused input's caret and border take the
+// theme's LineAccent, not its Accent, which fills faces, and Accent while
+// LineAccent is left zero.
+func TestLineAccent(t *testing.T) {
+	magenta, cyan := color.RGBA{255, 0, 255, 255}, color.RGBA{0, 255, 255, 255}
+	render := func(line Color) *Tester {
+		var s string
+		return coreNewTester(func(c *context) {
+			th := *c.Theme()
+			th.Accent, th.LineAccent = RGB(255, 0, 255), line
+			c.SetTheme(&th)
+			coreTextInput(c, &s).Width(100).AutoFocus()
+		}, 200, 100)
+	}
+	tt := render(RGB(0, 255, 255))
+	if n := countColor(tt, cyan); n == 0 {
+		t.Error("with LineAccent: no pixel of it")
+	}
+	if n := countColor(tt, magenta); n != 0 {
+		t.Errorf("with LineAccent: %d pixels of Accent", n)
+	}
+	if n := countColor(render(Transparent), magenta); n == 0 {
+		t.Error("without LineAccent: no pixel of Accent")
 	}
 }

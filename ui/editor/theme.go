@@ -60,7 +60,7 @@ func DefaultTheme(t *ui.Theme) *Theme {
 		Text:        t.Text,
 		LineNumber:  t.TextMuted.Alpha(0.75),
 		Selection:   t.Selection,
-		Cursor:      t.Accent,
+		Cursor:      t.LineAccentColor(),
 		WrapGuide:   t.Border.Alpha(0.6),
 		IndentGuide: t.Border.Alpha(0.55),
 		Whitespace:  t.TextMuted.Alpha(0.45),
