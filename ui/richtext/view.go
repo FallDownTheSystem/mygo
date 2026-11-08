@@ -69,7 +69,7 @@ func Editor(c *ui.Context, doc *Document, options ...EditorOptions) ui.Element {
 	e := build(c, doc, options, true)
 	e.Radius(t.Radius).Background(t.Surface).Border(1, t.Border).MinHeight(t.Space(30))
 	if e.Focused() {
-		e.Border(1, t.Accent)
+		e.Border(1, t.LineAccentColor())
 	}
 	return e
 }

@@ -113,7 +113,7 @@ func DefaultTheme(t *ui.Theme) *Theme {
 		CodeLineHeight:      1.4,
 		Text:                t.Text,
 		Muted:               t.TextMuted,
-		Link:                t.Accent,
+		Link:                t.LineAccentColor(),
 		Strong:              t.Text,
 		StrongWeight:        600,
 		Code:                t.Text,

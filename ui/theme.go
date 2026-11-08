@@ -28,6 +28,11 @@ type Theme struct {
 	AccentHover   Color
 	AccentPressed Color
 	AccentText    Color
+	// LineAccent is the accent of lines and text rather than faces: the
+	// caret of text inputs and the code editor, links, and the border of a
+	// focused input. Left zero, it is Accent; set it apart for an accent
+	// that fills well but is too faint or too strong as a thin line.
+	LineAccent Color
 	// InactiveAccent is what the accent fades to in a window that is not
 	// drawn as active (Context.WindowActive), as AppKit fades an inactive
 	// window's: the fill of selected rows, of checked check boxes, radio
@@ -89,6 +94,15 @@ func (t *Theme) Space(n float32) float32 {
 		s = 4
 	}
 	return n * s
+}
+
+// LineAccentColor returns the accent of carets, links and the borders of
+// focused inputs: LineAccent, or Accent when it is left zero.
+func (t *Theme) LineAccentColor() Color {
+	if t.LineAccent != Transparent {
+		return t.LineAccent
+	}
+	return t.Accent
 }
 
 // inactiveAccent returns what the accent fades to in a window that is not

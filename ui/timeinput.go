@@ -201,7 +201,7 @@ func coreTimeInput(c *context, tm *time.Time) *node {
 	f.styleFn = func(f *node) {
 		for _, k := range order {
 			if segs[k].Focused() {
-				f.borderC = t.Accent
+				f.borderC = t.LineAccentColor()
 			}
 		}
 	}
