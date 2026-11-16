@@ -348,3 +348,30 @@ func TestLineEndsMoveLines(t *testing.T) {
 		t.Fatalf("after redo %q", got)
 	}
 }
+
+// Each line's ending is the one it was read with, or made with, and the
+// last line has none.
+func TestLineEndingOf(t *testing.T) {
+	b := NewBuffer("ab\r\nc\rd\ne")
+	for i, want := range []string{"\r\n", "\r", "\n", "", ""} {
+		if got := b.LineEndingOf(i); got != want {
+			t.Errorf("line %d ends %q, want %q", i, got, want)
+		}
+	}
+	// Enter in the first line ends both halves as it ended.
+	b.Edit(Edit{Start: 1, End: 1, Text: "\n"})
+	var got []string
+	for i := range b.LineCount() {
+		got = append(got, b.LineEndingOf(i))
+	}
+	if want := []string{"\r\n", "\r\n", "\r", "\n", ""}; strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Errorf("after Enter: %q, want %q", got, want)
+	}
+	var lines strings.Builder
+	for i := range b.LineCount() {
+		lines.WriteString(b.Line(i) + b.LineEndingOf(i))
+	}
+	if w := written(t, b); lines.String() != w {
+		t.Errorf("lines with their endings %q, WriteTo %q", lines.String(), w)
+	}
+}

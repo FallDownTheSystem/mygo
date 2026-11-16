@@ -156,6 +156,18 @@ func (b *Buffer) LineEnding() string {
 	return b.ends.dominant()
 }
 
+// LineEndingOf returns the ending of line i as WriteTo writes it, \r\n,
+// \r or \n, and "" for the last line, which has none: so that text made
+// of the buffer's lines, as some of them staged, keeps their endings.
+func (b *Buffer) LineEndingOf(i int) string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if i < 0 || i >= b.text.LineCount()-1 {
+		return ""
+	}
+	return ending(b.ends.at(i))
+}
+
 // SetLineEnding converts the ending of every line to ending, \r\n, \r
 // or \n, as an editor's command converting a file's line endings: lines
 // it breaks later end so too. It is not a step of undo, and undo and redo
